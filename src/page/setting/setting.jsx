@@ -5,3 +5,13 @@ export default function Setting() {
     <div>Setting</div>
   )
 }
+
+/*
+
+JSX
+users
+stores
+orders
+niches
+products
+*/

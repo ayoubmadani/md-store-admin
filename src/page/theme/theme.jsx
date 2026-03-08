@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 
 const api = axios.create({
-    baseURL: "http://localhost:7000",
+    baseURL: import.meta.env.VITE_API_URL,
     headers: { "Content-Type": "application/json" },
 });
 
