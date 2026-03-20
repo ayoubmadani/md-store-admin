@@ -25,6 +25,7 @@ const MainLayout = () => {
     { name: 'Orders',    path: '/orders',   icon: <ShoppingCart size={20} /> },
     { name: 'Products',  path: '/products', icon: <Package      size={20} /> },
     { name: 'Niches',    path: '/niches',   icon: <Layers       size={20} /> },
+    { name: 'Plan',      path: '/plan',     icon: <Layers       size={20} /> },
   ];
 
   // Resolve the current page name for the breadcrumb
