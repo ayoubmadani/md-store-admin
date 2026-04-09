@@ -10,6 +10,7 @@ import Stores from './page/stores/stores'
 import Orders from './page/orders/orders'
 import Products from './page/products/products'
 import PlanPage from './page/plan/plan'
+import Message from './page/message/message'
 
 export default function App() {
   return (
@@ -24,7 +25,9 @@ export default function App() {
           <Route path='Stores' element={<Stores />} /> 
           <Route path='Orders' element={<Orders />} /> 
           <Route path='Products' element={<Products />} /> 
-          <Route path='Plan' element={<PlanPage />} /> 
+          <Route path='Plan' element={<PlanPage />} />
+          <Route path='Message' element={<Message />} /> 
+          
         </Route>
       </Routes>
     </BrowserRouter>
