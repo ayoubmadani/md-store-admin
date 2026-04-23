@@ -11,6 +11,8 @@ import Orders from './page/orders/orders'
 import Products from './page/products/products'
 import PlanPage from './page/plan/plan'
 import Message from './page/message/message'
+import CategoryNiche from './page/category-niche/category-niche'
+import ImageAdminPage from './page/image/image'
 
 export default function App() {
   return (
@@ -20,6 +22,7 @@ export default function App() {
           <Route index element={<Dashboard />} /> 
           <Route path='themes' element={<Theme />} /> 
           <Route path='niches' element={<Niche />} /> 
+          <Route path='categories' element={<CategoryNiche />} /> 
           <Route path='Settings' element={<Setting />} /> 
           <Route path='users' element={<User />} /> 
           <Route path='Stores' element={<Stores />} /> 
@@ -27,6 +30,7 @@ export default function App() {
           <Route path='Products' element={<Products />} /> 
           <Route path='Plan' element={<PlanPage />} />
           <Route path='Message' element={<Message />} /> 
+          <Route path='images' element={<ImageAdminPage />} /> 
           
         </Route>
       </Routes>

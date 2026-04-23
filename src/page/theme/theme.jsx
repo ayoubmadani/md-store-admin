@@ -12,16 +12,18 @@ const Icon = ({ d, size = 18, stroke = "currentColor", fill = "none" }) => (
         <path d={d} />
     </svg>
 );
-const SearchIcon = () => <Icon d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />;
-const PlusIcon = () => <Icon d="M12 5v14M5 12h14" />;
-const TrashIcon = () => <Icon d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" />;
-const EditIcon = () => <Icon d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />;
-const TagIcon = () => <Icon d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82zM7 7h.01" />;
+const SearchIcon  = () => <Icon d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />;
+const PlusIcon    = () => <Icon d="M12 5v14M5 12h14" />;
+const TrashIcon   = () => <Icon d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" />;
+const EditIcon    = () => <Icon d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />;
+const TagIcon     = () => <Icon d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82zM7 7h.01" />;
 const ChevronIcon = ({ dir = "right" }) => <Icon d={dir === "left" ? "M15 18l-6-6 6-6" : "M9 18l6-6-6-6"} />;
-const XIcon = () => <Icon d="M18 6 6 18M6 6l12 12" />;
-const GridIcon = () => <Icon d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z" />;
-const ListIcon = () => <Icon d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />;
+const XIcon       = () => <Icon d="M18 6 6 18M6 6l12 12" />;
+const GridIcon    = () => <Icon d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z" />;
+const ListIcon    = () => <Icon d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />;
 const SlidersIcon = () => <Icon d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6" />;
+const CrownIcon   = () => <Icon d="M2 20h20M5 20V9l7-5 7 5v11M9 20v-5h6v5" />;
+const CheckIcon   = () => <Icon d="M20 6 9 17l-5-5" />;
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
 function Toast({ msg, type, onClose }) {
@@ -136,12 +138,152 @@ function ThemeForm({ initial = {}, types = [], onSubmit, loading }) {
     );
 }
 
+// ─── ThemePlanModal ───────────────────────────────────────────────────────────
+function ThemePlanModal({ theme, plans, onClose, onToast }) {
+    const [assignedPlanIds, setAssignedPlanIds] = useState([]);
+    const [toggling, setToggling] = useState(null); // planId being toggled
+
+    // جلب الخطط المرتبطة بهذا الثيم
+    useEffect(() => {
+        api.get(`/admin/theme/${theme.id}/plans`)
+            .then(res => setAssignedPlanIds((res.data ?? []).map(tp => tp.planId)))
+            .catch(() => onToast("Failed to load plan assignments", "error"));
+    }, [theme.id]);
+
+    const handleToggle = async (planId) => {
+        const isAssigned = assignedPlanIds.includes(planId);
+        setToggling(planId);
+        try {
+            if (isAssigned) {
+                await api.delete(`/admin/theme/${theme.id}/plans/${planId}`);
+                setAssignedPlanIds(prev => prev.filter(id => id !== planId));
+                onToast("Removed from plan");
+            } else {
+                await api.post(`/admin/theme/${theme.id}/plans`, { planId });
+                setAssignedPlanIds(prev => [...prev, planId]);
+                onToast("Added to plan");
+            }
+        } catch {
+            onToast("Failed to update plan assignment", "error");
+        } finally {
+            setToggling(null);
+        }
+    };
+
+    return (
+        <Modal title={`Plan Access — ${theme.name_en || theme.slug}`} onClose={onClose}>
+            {/* Theme preview strip */}
+            <div style={{
+                display: "flex", alignItems: "center", gap: 12,
+                padding: "10px 14px", background: "#f8fafc", borderRadius: 10,
+                border: "1px solid #e2e8f0", marginBottom: 20,
+            }}>
+                {theme.imageUrl && (
+                    <img src={theme.imageUrl} alt="" style={{ width: 40, height: 40, borderRadius: 6, objectFit: "cover" }}
+                        onError={e => { e.target.style.display = "none"; }} />
+                )}
+                <div>
+                    <div style={{ fontWeight: 700, fontSize: 14, color: "#0f172a" }}>{theme.name_en}</div>
+                    <div style={{ fontSize: 11, color: "#94a3b8", fontFamily: "monospace" }}>{theme.slug}</div>
+                </div>
+                <div style={{ marginLeft: "auto", fontWeight: 800, fontSize: 15, color: "#2563eb" }}>
+                    ${Number(theme.price).toFixed(2)}
+                </div>
+            </div>
+
+            <p style={{ fontSize: 12, color: "#64748b", marginBottom: 16, lineHeight: 1.6 }}>
+                Select which subscription plans include this theme at no extra charge.
+                Users on selected plans can install it for free.
+            </p>
+
+            {plans.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "32px 0", color: "#94a3b8", fontSize: 13 }}>
+                    No plans found. Create plans in the subscription section first.
+                </div>
+            ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    {plans.map(plan => {
+                        const isAssigned = assignedPlanIds.includes(plan.id);
+                        const isLoading  = toggling === plan.id;
+                        return (
+                            <div
+                                key={plan.id}
+                                onClick={() => !isLoading && handleToggle(plan.id)}
+                                style={{
+                                    display: "flex", alignItems: "center", gap: 14,
+                                    padding: "14px 16px", borderRadius: 10, cursor: "pointer",
+                                    border: `1.5px solid ${isAssigned ? "#6366f1" : "#e2e8f0"}`,
+                                    background: isAssigned ? "#eef2ff" : "#fff",
+                                    transition: "all .15s",
+                                    opacity: isLoading ? 0.6 : 1,
+                                }}
+                            >
+                                {/* Crown icon */}
+                                <div style={{
+                                    width: 36, height: 36, borderRadius: 8, flexShrink: 0,
+                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                    background: isAssigned ? "#6366f1" : "#f1f5f9",
+                                    color: isAssigned ? "#fff" : "#94a3b8",
+                                    transition: "all .15s",
+                                }}>
+                                    <CrownIcon />
+                                </div>
+
+                                {/* Plan info */}
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ fontWeight: 700, fontSize: 14, color: "#0f172a" }}>{plan.name}</div>
+                                    <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>
+                                        {Number(plan.monthlyPrice) > 0
+                                            ? `${Number(plan.monthlyPrice).toFixed(2)} DZD / mo`
+                                            : "Free plan"
+                                        }
+                                        {Number(plan.yearlyPrice) > 0 && ` · ${Number(plan.yearlyPrice).toFixed(2)} DZD / yr`}
+                                    </div>
+                                </div>
+
+                                {/* Toggle indicator */}
+                                {isLoading ? (
+                                    <div style={{ width: 22, height: 22, borderRadius: "50%", border: "2px solid #6366f1", borderTopColor: "transparent", animation: "tm-spin .6s linear infinite", flexShrink: 0 }} />
+                                ) : (
+                                    <div style={{
+                                        width: 22, height: 22, borderRadius: 6, flexShrink: 0,
+                                        display: "flex", alignItems: "center", justifyContent: "center",
+                                        background: isAssigned ? "#6366f1" : "#f1f5f9",
+                                        border: `1.5px solid ${isAssigned ? "#6366f1" : "#e2e8f0"}`,
+                                        color: "#fff", transition: "all .15s",
+                                    }}>
+                                        {isAssigned && <CheckIcon />}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+
+            <div style={{ marginTop: 20, padding: "12px 14px", background: "#fffbeb", borderRadius: 8, border: "1px solid #fde68a" }}>
+                <p style={{ margin: 0, fontSize: 11, color: "#92400e", lineHeight: 1.6 }}>
+                    <strong>Note:</strong> Themes not included in any plan will still be installable
+                    by users but will charge from their wallet balance (${Number(theme.price).toFixed(2)}).
+                </p>
+            </div>
+        </Modal>
+    );
+}
+
 // ─── ThemeCard ────────────────────────────────────────────────────────────────
-function ThemeCard({ theme, types, onEdit, onDelete, toggleActive }) {
-    // ✅ أضف التحقق Array.isArray لضمان عدم الانهيار
+function ThemeCard({ theme, types, onEdit, onDelete, toggleActive, onManagePlans }) {
     const typeName = Array.isArray(types)
         ? types.find(t => t.id === theme.typeId)?.name
         : null;
+
+    const btnBase = {
+        flex: 1, padding: "7px 0", background: "#f8fafc", border: "1px solid #e2e8f0",
+        borderRadius: 8, color: "#475569", cursor: "pointer",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        gap: 6, fontSize: 12, fontWeight: 600, transition: "all .15s",
+    };
+
     return (
         <div
             style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 14, overflow: "hidden", transition: "box-shadow .2s, transform .2s" }}
@@ -159,6 +301,7 @@ function ThemeCard({ theme, types, onEdit, onDelete, toggleActive }) {
                     </span>
                 )}
             </div>
+
             <div style={{ padding: "12px 14px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
                     <div style={{ minWidth: 0 }}>
@@ -176,11 +319,12 @@ function ThemeCard({ theme, types, onEdit, onDelete, toggleActive }) {
                         {theme.desc_en}
                     </p>
                 )}
-                <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
 
+                {/* Row 1: Edit + Active toggle */}
+                <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
                     <button
                         onClick={() => onEdit(theme)}
-                        style={{ flex: 1, padding: "7px 0", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, color: "#475569", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontSize: 12, fontWeight: 600, transition: "all .15s" }}
+                        style={btnBase}
                         onMouseEnter={e => { e.currentTarget.style.background = "#dbeafe"; e.currentTarget.style.borderColor = "#93c5fd"; e.currentTarget.style.color = "#1d4ed8"; }}
                         onMouseLeave={e => { e.currentTarget.style.background = "#f8fafc"; e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.color = "#475569"; }}
                     >
@@ -188,27 +332,19 @@ function ThemeCard({ theme, types, onEdit, onDelete, toggleActive }) {
                     </button>
 
                     <button
-                        className="cursor-pointer"
-                        // ✅ التغيير هنا: استخدم onClick ومرر المعاملات الصحيحة
                         onClick={() => toggleActive(theme.id, theme.isActive)}
-                        style={{ display: "flex", alignItems: "center", gap: "6px", padding: "7px 14px", background: theme.isActive ? "#f0fdf4" : "#f8fafc", border: `1px solid ${theme.isActive ? "#bbf7d0" : "#e2e8f0"}`, borderRadius: "20px", color: theme.isActive ? "#16a34a" : "#64748b", fontSize: "13px", fontWeight: "600", cursor: "pointer", transition: "all 0.2s ease",
+                        style={{
+                            display: "flex", alignItems: "center", gap: 6,
+                            padding: "7px 14px", flex: 1, justifyContent: "center",
+                            background: theme.isActive ? "#f0fdf4" : "#f8fafc",
+                            border: `1px solid ${theme.isActive ? "#bbf7d0" : "#e2e8f0"}`,
+                            borderRadius: 20, color: theme.isActive ? "#16a34a" : "#64748b",
+                            fontSize: 12, fontWeight: 600, cursor: "pointer", transition: "all .2s",
                         }}
-                        onMouseEnter={e => {
-                            e.currentTarget.style.transform = "translateY(-1px)";
-                            e.currentTarget.style.boxShadow = "0 2px 4px rgba(0,0,0,0.05)";
-                        }}
-                        onMouseLeave={e => {
-                            e.currentTarget.style.transform = "translateY(0)";
-                            e.currentTarget.style.boxShadow = "none";
-                        }}
+                        onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; }}
+                        onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; }}
                     >
-                        <span style={{
-                            width: "8px",
-                            height: "8px",
-                            borderRadius: "50%",
-                            background: theme.isActive ? "#22c55e" : "#94a3b8",
-                            display: "inline-block"
-                        }} />
+                        <span style={{ width: 8, height: 8, borderRadius: "50%", background: theme.isActive ? "#22c55e" : "#94a3b8", display: "inline-block" }} />
                         {theme.isActive ? "Active" : "Inactive"}
                     </button>
 
@@ -221,6 +357,22 @@ function ThemeCard({ theme, types, onEdit, onDelete, toggleActive }) {
                         <TrashIcon />
                     </button>
                 </div>
+
+                {/* Row 2: Manage Plans */}
+                <button
+                    onClick={() => onManagePlans(theme)}
+                    style={{
+                        width: "100%", marginTop: 8, padding: "7px 0",
+                        display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+                        background: "#faf5ff", border: "1px solid #e9d5ff",
+                        borderRadius: 8, color: "#7c3aed", fontSize: 12, fontWeight: 700,
+                        cursor: "pointer", transition: "all .15s",
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = "#ede9fe"; e.currentTarget.style.borderColor = "#c4b5fd"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "#faf5ff"; e.currentTarget.style.borderColor = "#e9d5ff"; }}
+                >
+                    <CrownIcon /> Manage Plan Access
+                </button>
             </div>
         </div>
     );
@@ -238,70 +390,68 @@ function Stat({ label, value, accent }) {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function ThemePage() {
-    const [themes, setThemes] = useState([]);
-    const [types, setTypes] = useState([]);
-    const [meta, setMeta] = useState({ totalItems: 0, totalPages: 1, currentPage: 1 });
-    const [query, setQuery] = useState("");
+    const [themes,     setThemes]     = useState([]);
+    const [types,      setTypes]      = useState([]);
+    const [plans,      setPlans]      = useState([]);
+    const [meta,       setMeta]       = useState({ totalItems: 0, totalPages: 1, currentPage: 1 });
+    const [query,      setQuery]      = useState("");
     const [filterType, setFilterType] = useState("");
-    const [page, setPage] = useState(1);
+    const [page,       setPage]       = useState(1);
     const LIMIT = 12;
 
-    const [loading, setLoading] = useState(false);
-    const [viewMode, setViewMode] = useState("grid");
-    const [modal, setModal] = useState(null);
-    const [editing, setEditing] = useState(null);
-    const [toast, setToast] = useState(null);
-    const [typeName, setTypeName] = useState("");
-    const [saving, setSaving] = useState(false);
+    const [loading,    setLoading]    = useState(false);
+    const [viewMode,   setViewMode]   = useState("grid");
+    const [modal,      setModal]      = useState(null);   // "create" | "edit" | "type" | "plans"
+    const [editing,    setEditing]    = useState(null);
+    const [planTarget, setPlanTarget] = useState(null);   // theme being assigned to plans
+    const [toast,      setToast]      = useState(null);
+    const [typeName,   setTypeName]   = useState("");
+    const [saving,     setSaving]     = useState(false);
 
     const showToast = (msg, type = "success") => setToast({ msg, type });
 
     const loadTypes = useCallback(async () => {
-        try {
-            const res = await api.get("/theme/type");
-            setTypes(res.data);
-        } catch { /* silent */ }
+        try { const res = await api.get("/theme/type"); setTypes(res.data); }
+        catch { /* silent */ }
+    }, []);
+
+    // جلب كل الخطط للـ plan assignment modal
+    const loadPlans = useCallback(async () => {
+        try { const res = await api.get("/plans"); setPlans(res.data ?? []); }
+        catch { /* silent — plans optional */ }
     }, []);
 
     const loadThemes = useCallback(async () => {
         setLoading(true);
         try {
-            const params = {};
-            if (query) params.query = query;
-            if (filterType) params.type = filterType;
-            params.page = page;
-            params.limit = LIMIT;
-            const res = await api.get("/theme?isAdmin=true", { params });
+            const params = { page, limit: LIMIT, isAdmin: true };
+            if (query)      params.query = query;
+            if (filterType) params.type  = filterType;
+            const res = await api.get("/theme", { params });
             setThemes(res.data.data ?? []);
             setMeta(res.data.meta ?? { totalItems: 0, totalPages: 1, currentPage: 1 });
         } catch { showToast("Failed to load themes", "error"); }
         finally { setLoading(false); }
     }, [query, filterType, page]);
 
-    useEffect(() => { loadTypes(); }, [loadTypes]);
+    useEffect(() => { loadTypes(); loadPlans(); }, [loadTypes, loadPlans]);
     useEffect(() => { loadThemes(); }, [loadThemes]);
-
     useEffect(() => {
         const t = setTimeout(() => setPage(1), 350);
         return () => clearTimeout(t);
     }, [query, filterType]);
 
     const handleCreate = async dto => {
-        console.log(dto)        
         setSaving(true);
-        try {
-            await api.post("/theme", [dto]);
-            showToast("Theme created!"); setModal(null); loadThemes();
-        } catch { showToast("Create failed", "error"); }
+        try { await api.post("/theme", [dto]); showToast("Theme created!"); setModal(null); loadThemes(); }
+        catch { showToast("Create failed", "error"); }
         setSaving(false);
     };
 
     const handleUpdate = async dto => {
         setSaving(true);
-        try {
-            await api.patch(`/theme/${editing.id}`, dto);
-            showToast("Theme updated!"); setModal(null); setEditing(null); loadThemes();
-        } catch { showToast("Update failed", "error"); }
+        try { await api.patch(`/theme/${editing.id}`, dto); showToast("Theme updated!"); setModal(null); setEditing(null); loadThemes(); }
+        catch { showToast("Update failed", "error"); }
         setSaving(false);
     };
 
@@ -312,27 +462,16 @@ export default function ThemePage() {
     };
 
     const handleToggle = async (id, currentStatus) => {
-        // اختياري: تأكيد التفعيل أو الإيقاف
-        const action = currentStatus ? "deactivate" : "activate";
-        if (!confirm(`Are you sure you want to ${action} this theme?`)) return;
-        console.log({ isActive: !currentStatus });
-        
-        try {
-            await api.patch(`/theme/${id}`, { isActive: !currentStatus });
-            showToast(`Theme ${!currentStatus ? 'Activated' : 'Deactivated'}!`);
-            loadThemes(); // إعادة تحميل البيانات لتحديث الواجهة
-        } catch (err) {
-            showToast("Update failed", "error");
-        }
+        if (!confirm(`${currentStatus ? "Deactivate" : "Activate"} this theme?`)) return;
+        try { await api.patch(`/theme/${id}`, { isActive: !currentStatus }); showToast(`Theme ${!currentStatus ? "Activated" : "Deactivated"}!`); loadThemes(); }
+        catch { showToast("Update failed", "error"); }
     };
 
     const handleCreateType = async () => {
         if (!typeName.trim()) return;
         setSaving(true);
-        try {
-            await api.post("/theme/type", { name: typeName });
-            setTypeName(""); showToast("Type added!"); loadTypes();
-        } catch { showToast("Failed", "error"); }
+        try { await api.post("/theme/type", { name: typeName }); setTypeName(""); showToast("Type added!"); loadTypes(); }
+        catch { showToast("Failed", "error"); }
         setSaving(false);
     };
 
@@ -341,6 +480,8 @@ export default function ThemePage() {
         try { await api.delete(`/theme/type/${id}`); showToast("Type deleted"); loadTypes(); }
         catch { showToast("Failed", "error"); }
     };
+
+    const openPlanModal = (theme) => { setPlanTarget(theme); setModal("plans"); };
 
     const btnPrimary = {
         padding: "9px 18px", background: "#2563eb", border: "none", borderRadius: 8,
@@ -360,16 +501,16 @@ export default function ThemePage() {
     return (
         <>
             <style>{`
-        @keyframes tm-slideUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes tm-modalIn { from{opacity:0;transform:scale(.96)}       to{opacity:1;transform:scale(1)}    }
-        @keyframes tm-fadeIn  { from{opacity:0}                             to{opacity:1}                       }
-      `}</style>
+                @keyframes tm-slideUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+                @keyframes tm-modalIn { from{opacity:0;transform:scale(.96)}       to{opacity:1;transform:scale(1)}    }
+                @keyframes tm-fadeIn  { from{opacity:0}                             to{opacity:1}                       }
+                @keyframes tm-spin    { to{transform:rotate(360deg)} }
+            `}</style>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 18, animation: "tm-fadeIn .3s ease" }}>
 
                 {/* ── Toolbar ── */}
                 <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-                    {/* Search */}
                     <div style={{ position: "relative", flex: 1, minWidth: 180 }}>
                         <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#94a3b8", pointerEvents: "none" }}><SearchIcon /></span>
                         <input
@@ -379,26 +520,15 @@ export default function ThemePage() {
                         />
                     </div>
 
-                    {/* Type filter pills */}
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                         {[{ id: "", name: "All" }, ...types].map(t => (
-                            <button
-                                key={t.id}
-                                onClick={() => { setFilterType(t.id); setPage(1); }}
-                                style={{
-                                    padding: "7px 14px", border: "1px solid", borderRadius: 20,
-                                    fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all .15s",
-                                    borderColor: filterType === t.id ? "#2563eb" : "#e2e8f0",
-                                    background: filterType === t.id ? "#2563eb" : "#fff",
-                                    color: filterType === t.id ? "#fff" : "#64748b",
-                                }}
-                            >
+                            <button key={t.id} onClick={() => { setFilterType(t.id); setPage(1); }}
+                                style={{ padding: "7px 14px", border: "1px solid", borderRadius: 20, fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all .15s", borderColor: filterType === t.id ? "#2563eb" : "#e2e8f0", background: filterType === t.id ? "#2563eb" : "#fff", color: filterType === t.id ? "#fff" : "#64748b" }}>
                                 {t.name}
                             </button>
                         ))}
                     </div>
 
-                    {/* Right side */}
                     <div style={{ display: "flex", gap: 8, marginLeft: "auto" }}>
                         <button style={btnOutline(viewMode === "grid")} onClick={() => setViewMode("grid")} title="Grid view"><GridIcon /></button>
                         <button style={btnOutline(viewMode === "list")} onClick={() => setViewMode("list")} title="List view"><ListIcon /></button>
@@ -409,16 +539,17 @@ export default function ThemePage() {
 
                 {/* ── Stats ── */}
                 <div style={{ display: "flex", gap: 10 }}>
-                    <Stat label="Total" value={meta.totalItems} accent="#2563eb" />
-                    <Stat label="Page" value={`${meta.currentPage} / ${meta.totalPages}`} />
-                    <Stat label="Types" value={types.length} />
+                    <Stat label="Total"  value={meta.totalItems} accent="#2563eb" />
+                    <Stat label="Page"   value={`${meta.currentPage} / ${meta.totalPages}`} />
+                    <Stat label="Types"  value={types.length} />
+                    <Stat label="Plans"  value={plans.length} accent="#7c3aed" />
                 </div>
 
                 {/* ── Content ── */}
                 {loading ? (
                     <div style={{ display: "grid", gridTemplateColumns: viewMode === "grid" ? "repeat(auto-fill,minmax(240px,1fr))" : "1fr", gap: 14 }}>
                         {Array(6).fill(0).map((_, i) => (
-                            <div key={i} style={{ height: viewMode === "grid" ? 268 : 68, background: "#f1f5f9", borderRadius: 12, animation: `tm-fadeIn ${.1 * i + .2}s ease` }} />
+                            <div key={i} style={{ height: viewMode === "grid" ? 300 : 68, background: "#f1f5f9", borderRadius: 12, animation: `tm-fadeIn ${.1 * i + .2}s ease` }} />
                         ))}
                     </div>
                 ) : themes.length === 0 ? (
@@ -434,6 +565,7 @@ export default function ThemePage() {
                                 onEdit={th => { setEditing(th); setModal("edit"); }}
                                 onDelete={handleDelete}
                                 toggleActive={handleToggle}
+                                onManagePlans={openPlanModal}
                             />
                         ))}
                     </div>
@@ -457,6 +589,13 @@ export default function ThemePage() {
                                     {tName && <span style={{ padding: "3px 10px", background: "#eff6ff", color: "#2563eb", borderRadius: 20, fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{tName}</span>}
                                     <div style={{ fontSize: 14, fontWeight: 800, color: "#2563eb", minWidth: 56, textAlign: "right" }}>${Number(t.price).toFixed(2)}</div>
                                     <div style={{ display: "flex", gap: 6 }}>
+                                        <button onClick={() => openPlanModal(t)}
+                                            style={{ padding: "7px 10px", border: "1px solid #e9d5ff", borderRadius: 7, background: "#faf5ff", color: "#7c3aed", cursor: "pointer" }}
+                                            title="Manage plan access"
+                                            onMouseEnter={e => { e.currentTarget.style.background = "#ede9fe"; }}
+                                            onMouseLeave={e => { e.currentTarget.style.background = "#faf5ff"; }}>
+                                            <CrownIcon />
+                                        </button>
                                         <button onClick={() => { setEditing(t); setModal("edit"); }}
                                             style={{ padding: "7px 10px", border: "1px solid #e2e8f0", borderRadius: 7, background: "#fff", color: "#64748b", cursor: "pointer" }}
                                             onMouseEnter={e => { e.currentTarget.style.background = "#dbeafe"; e.currentTarget.style.color = "#1d4ed8"; }}
@@ -511,6 +650,14 @@ export default function ThemePage() {
                 <Modal title={`Edit — ${editing.name_en || editing.slug}`} onClose={() => { setModal(null); setEditing(null); }} wide>
                     <ThemeForm initial={editing} types={types} onSubmit={handleUpdate} loading={saving} />
                 </Modal>
+            )}
+            {modal === "plans" && planTarget && (
+                <ThemePlanModal
+                    theme={planTarget}
+                    plans={plans}
+                    onClose={() => { setModal(null); setPlanTarget(null); }}
+                    onToast={showToast}
+                />
             )}
             {modal === "type" && (
                 <Modal title="Manage Theme Types" onClose={() => setModal(null)}>
