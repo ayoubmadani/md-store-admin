@@ -285,6 +285,7 @@ function ThemePlanModal({ theme, plans, onClose, onToast }) {
 
 // ─── ThemeFilesModal ──────────────────────────────────────────────────────────
 function ThemeFilesModal({ theme, onClose, onToast }) {
+    const STORE = (import.meta.env.VITE_STORE_URL ?? "").replace(/\/+$/, "");
     const langs = [
         { key: "ar", label: "العربية", sub: "Arabic",  badge: "AR", color: "#16a34a", bg: "#f0fdf4", border: "#bbf7d0", accent: "#dcfce7", dir: "rtl" },
         { key: "fr", label: "Français", sub: "French",  badge: "FR", color: "#2563eb", bg: "#eff6ff", border: "#bfdbfe", accent: "#dbeafe", dir: "ltr" },
@@ -303,7 +304,7 @@ function ThemeFilesModal({ theme, onClose, onToast }) {
             setChecking(true);
             const results = await Promise.all(
                 ["ar", "fr", "en"].map(lang =>
-                    axios.get(`${import.meta.env.VITE_STORE_URL}/api/themes-controller`, { params: { lang, slug: theme.slug } })
+                    axios.get(`${STORE}/api/themes-controller`, { params: { lang, slug: theme.slug } })
                         .then(r => ({ lang, exists: r.data.exists }))
                         .catch(() => ({ lang, exists: false }))
                 )
@@ -326,7 +327,7 @@ function ThemeFilesModal({ theme, onClose, onToast }) {
             fd.append("file", files[lang]);
             fd.append("lang", lang);
             fd.append("slug", theme.slug);
-            await axios.post(`${import.meta.env.VITE_STORE_URL}/api/themes-controller`, fd, { headers: { "Content-Type": "multipart/form-data" } });
+            await axios.post(`${STORE}/api/themes-controller`, fd, { headers: { "Content-Type": "multipart/form-data" } });
             setDone(p => ({ ...p, [lang]: true }));
             onToast(`Theme ${lang.toUpperCase()} file uploaded!`);
         } catch {
@@ -411,7 +412,7 @@ function ThemeFilesModal({ theme, onClose, onToast }) {
                                 <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
                                     {(fileExists || isDone) && !file && (
                                         <a
-                                            href={`${import.meta.env.VITE_STORE_URL}/api/themes-controller?lang=${key}&slug=${theme.slug}&download=true`}
+                                            href={`${STORE}/api/themes-controller?lang=${key}&slug=${theme.slug}&download=true`}
                                             download={`${theme.slug}_${key}.tsx`}
                                             style={{ flex: 1, padding: "9px 0", background: "#f8fafc", border: `1px solid ${color}`, borderRadius: 8, color, fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 7, textDecoration: "none", transition: "background .15s" }}
                                             onMouseEnter={e => { e.currentTarget.style.background = color; e.currentTarget.style.color = "#fff"; }}
