@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
-import { File } from "lucide-react";
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL,
@@ -283,168 +282,8 @@ function ThemePlanModal({ theme, plans, onClose, onToast }) {
     );
 }
 
-// ─── ThemeFilesModal ──────────────────────────────────────────────────────────
-function ThemeFilesModal({ theme, onClose, onToast }) {
-    const STORE = (import.meta.env.VITE_STORE_URL ?? "").replace(/\/+$/, "");
-    const langs = [
-        { key: "ar", label: "العربية", sub: "Arabic",  badge: "AR", color: "#16a34a", bg: "#f0fdf4", border: "#bbf7d0", accent: "#dcfce7", dir: "rtl" },
-        { key: "fr", label: "Français", sub: "French",  badge: "FR", color: "#2563eb", bg: "#eff6ff", border: "#bfdbfe", accent: "#dbeafe", dir: "ltr" },
-        { key: "en", label: "English",  sub: "English", badge: "EN", color: "#7c3aed", bg: "#faf5ff", border: "#e9d5ff", accent: "#ede9fe", dir: "ltr" },
-    ];
-
-    const [files,     setFiles]     = useState({ ar: null, fr: null, en: null });
-    const [uploading, setUploading] = useState({});
-    const [done,      setDone]      = useState({});
-    const [exists,    setExists]    = useState({});
-    const [checking,  setChecking]  = useState(true);
-    const [dragOver,  setDragOver]  = useState(null);
-
-    useEffect(() => {
-        const checkAll = async () => {
-            setChecking(true);
-            const results = await Promise.all(
-                ["ar", "fr", "en"].map(lang =>
-                    axios.get(`${STORE}/api/themes-controller`, { params: { lang, slug: theme.slug } })
-                        .then(r => ({ lang, exists: r.data.exists }))
-                        .catch(() => ({ lang, exists: false }))
-                )
-            );
-            setExists(Object.fromEntries(results.map(r => [r.lang, r.exists])));
-            setChecking(false);
-        };
-        checkAll();
-    }, [theme.slug]);
-
-    const pickFile = (lang, file) => {
-        if (file) { setFiles(p => ({ ...p, [lang]: file })); setDone(p => ({ ...p, [lang]: false })); }
-    };
-
-    const handleUpload = async (lang) => {
-        if (!files[lang]) return;
-        setUploading(p => ({ ...p, [lang]: true }));
-        try {
-            const fd = new FormData();
-            fd.append("file", files[lang]);
-            fd.append("lang", lang);
-            fd.append("slug", theme.slug);
-            await axios.post(`${STORE}/api/themes-controller`, fd, { headers: { "Content-Type": "multipart/form-data" } });
-            setDone(p => ({ ...p, [lang]: true }));
-            onToast(`Theme ${lang.toUpperCase()} file uploaded!`);
-        } catch {
-            onToast(`Upload failed for ${lang.toUpperCase()}`, "error");
-        } finally {
-            setUploading(p => ({ ...p, [lang]: false }));
-        }
-    };
-
-    return (
-        <Modal title={`Theme Files — ${theme.name_en || theme.slug}`} onClose={onClose}>
-            {/* Theme preview strip */}
-            <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", background: "#f8fafc", borderRadius: 10, border: "1px solid #e2e8f0", marginBottom: 18 }}>
-                {theme.imageUrl && (
-                    <img src={theme.imageUrl} alt="" style={{ width: 40, height: 40, borderRadius: 6, objectFit: "cover" }} onError={e => { e.target.style.display = "none"; }} />
-                )}
-                <div>
-                    <div style={{ fontWeight: 700, fontSize: 14, color: "#0f172a" }}>{theme.name_en}</div>
-                    <div style={{ fontSize: 11, color: "#94a3b8", fontFamily: "monospace" }}>{theme.slug}</div>
-                </div>
-                <div style={{ marginLeft: "auto", fontWeight: 800, fontSize: 15, color: "#2563eb" }}>${Number(theme.price).toFixed(2)}</div>
-            </div>
-
-            <p style={{ fontSize: 12, color: "#64748b", marginBottom: 18, lineHeight: 1.6 }}>
-                Upload a theme file for each language. Users will receive the file matching their selected language.
-            </p>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                {langs.map(({ key, label, sub, badge, color, bg, border, accent, dir }) => {
-                    const file        = files[key];
-                    const isLoading   = uploading[key];
-                    const isDone      = done[key];
-                    const isDrag      = dragOver === key;
-                    const fileExists  = exists[key];
-
-                    return (
-                        <div key={key} style={{ border: `1.5px solid ${isDrag ? color : border}`, borderRadius: 12, background: isDrag ? accent : bg, transition: "all .15s", overflow: "hidden" }}>
-                            {/* Lang header */}
-                            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderBottom: `1px solid ${border}` }}>
-                                <div style={{ width: 32, height: 32, borderRadius: 8, background: color, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 12, flexShrink: 0 }}>
-                                    {badge}
-                                </div>
-                                <div>
-                                    <div style={{ fontWeight: 700, fontSize: 14, color: "#0f172a" }} dir={dir}>{label}</div>
-                                    <div style={{ fontSize: 11, color: "#94a3b8" }}>{sub} version</div>
-                                </div>
-                                <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 700 }}>
-                                    {checking ? (
-                                        <div style={{ width: 12, height: 12, border: "2px solid #cbd5e1", borderTopColor: "transparent", borderRadius: "50%", animation: "tm-spin .6s linear infinite" }} />
-                                    ) : isDone || fileExists ? (
-                                        <span style={{ display: "flex", alignItems: "center", gap: 4, color: "#16a34a" }}><CheckIcon /> {isDone ? "Uploaded" : "File exists"}</span>
-                                    ) : (
-                                        <span style={{ color: "#f59e0b" }}>No file</span>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Drop zone */}
-                            <div
-                                style={{ padding: 14 }}
-                                onDragOver={e => { e.preventDefault(); setDragOver(key); }}
-                                onDragLeave={() => setDragOver(null)}
-                                onDrop={e => { e.preventDefault(); setDragOver(null); pickFile(key, e.dataTransfer.files[0]); }}
-                            >
-                                <label style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6, padding: "16px 12px", border: `2px dashed ${isDrag ? color : "#cbd5e1"}`, borderRadius: 8, cursor: "pointer", background: isDrag ? accent : "transparent", transition: "all .15s" }}>
-                                    <input type="file" style={{ display: "none" }} onChange={e => pickFile(key, e.target.files[0])} />
-                                    {file ? (
-                                        <>
-                                            <File size={22} color={color} />
-                                            <span style={{ fontSize: 12, fontWeight: 600, color: "#0f172a", textAlign: "center", wordBreak: "break-all" }}>{file.name}</span>
-                                            <span style={{ fontSize: 10, color: "#94a3b8" }}>{(file.size / 1024).toFixed(1)} KB — click to change</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Icon d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" size={22} stroke="#94a3b8" />
-                                            <span style={{ fontSize: 12, color: "#64748b", fontWeight: 600 }}>Drop file here or click to browse</span>
-                                            <span style={{ fontSize: 10, color: "#94a3b8" }}>Theme file for {sub}</span>
-                                        </>
-                                    )}
-                                </label>
-
-                                <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-                                    {(fileExists || isDone) && !file && (
-                                        <a
-                                            href={`${STORE}/api/themes-controller?lang=${key}&slug=${theme.slug}&download=true`}
-                                            download={`${theme.slug}_${key}.tsx`}
-                                            style={{ flex: 1, padding: "9px 0", background: "#f8fafc", border: `1px solid ${color}`, borderRadius: 8, color, fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 7, textDecoration: "none", transition: "background .15s" }}
-                                            onMouseEnter={e => { e.currentTarget.style.background = color; e.currentTarget.style.color = "#fff"; }}
-                                            onMouseLeave={e => { e.currentTarget.style.background = "#f8fafc"; e.currentTarget.style.color = color; }}
-                                        >
-                                            <Icon d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" size={14} stroke={color} /> Download
-                                        </a>
-                                    )}
-                                    {file && (
-                                        <button
-                                            onClick={() => handleUpload(key)}
-                                            disabled={isLoading}
-                                            style={{ flex: 1, padding: "9px 0", background: isLoading ? "#e2e8f0" : color, border: "none", borderRadius: 8, color: isLoading ? "#94a3b8" : "#fff", fontWeight: 700, fontSize: 13, cursor: isLoading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 7, transition: "background .15s" }}
-                                        >
-                                            {isLoading
-                                                ? <><div style={{ width: 14, height: 14, border: "2px solid #94a3b8", borderTopColor: "transparent", borderRadius: "50%", animation: "tm-spin .6s linear infinite" }} /> Uploading…</>
-                                                : <><Icon d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" size={14} stroke="#fff" /> Upload {badge} File</>
-                                            }
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
-        </Modal>
-    );
-}
-
 // ─── ThemeCard ────────────────────────────────────────────────────────────────
-function ThemeCard({ theme, types, onEdit, onDelete, toggleActive, onManagePlans, onManageFiles }) {
+function ThemeCard({ theme, types, onEdit, onDelete, toggleActive, onManagePlans }) {
     const typeName = Array.isArray(types)
         ? types.find(t => t.id === theme.typeId)?.name
         : null;
@@ -545,20 +384,6 @@ function ThemeCard({ theme, types, onEdit, onDelete, toggleActive, onManagePlans
                 >
                     <CrownIcon size={16} /> Manage Plan Access
                 </button>
-                <button
-                    onClick={() => onManageFiles(theme)}
-                    style={{
-                        width: "100%", marginTop: 8, padding: "7px 0",
-                        display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
-                        background: "#f0f9ff", border: "1px solid #bae6fd",
-                        borderRadius: 8, color: "#0369a1", fontSize: 12, fontWeight: 700,
-                        cursor: "pointer", transition: "all .15s",
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.background = "#e0f2fe"; e.currentTarget.style.borderColor = "#7dd3fc"; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = "#f0f9ff"; e.currentTarget.style.borderColor = "#bae6fd"; }}
-                >
-                    <File size={16} /> Manage Theme Files
-                </button>
             </div>
         </div>
     );
@@ -587,10 +412,9 @@ export default function ThemePage() {
 
     const [loading, setLoading] = useState(false);
     const [viewMode, setViewMode] = useState("grid");
-    const [modal, setModal] = useState(null);   // "create" | "edit" | "type" | "plans" | "files"
+    const [modal, setModal] = useState(null);   // "create" | "edit" | "type" | "plans"
     const [editing, setEditing] = useState(null);
     const [planTarget, setPlanTarget] = useState(null);
-    const [fileTarget, setFileTarget] = useState(null);
     const [toast, setToast] = useState(null);
     const [typeName, setTypeName] = useState("");
     const [saving, setSaving] = useState(false);
@@ -669,7 +493,6 @@ export default function ThemePage() {
     };
 
     const openPlanModal  = (theme) => { setPlanTarget(theme); setModal("plans"); };
-    const openFileModal  = (theme) => { setFileTarget(theme); setModal("files"); };
 
     const btnPrimary = {
         padding: "9px 18px", background: "#2563eb", border: "none", borderRadius: 8,
@@ -754,7 +577,6 @@ export default function ThemePage() {
                                 onDelete={handleDelete}
                                 toggleActive={handleToggle}
                                 onManagePlans={openPlanModal}
-                                onManageFiles={openFileModal}
                             />
                         ))}
                     </div>
@@ -845,13 +667,6 @@ export default function ThemePage() {
                     theme={planTarget}
                     plans={plans}
                     onClose={() => { setModal(null); setPlanTarget(null); }}
-                    onToast={showToast}
-                />
-            )}
-            {modal === "files" && fileTarget && (
-                <ThemeFilesModal
-                    theme={fileTarget}
-                    onClose={() => { setModal(null); setFileTarget(null); }}
                     onToast={showToast}
                 />
             )}
