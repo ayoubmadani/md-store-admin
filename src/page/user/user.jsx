@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const api = axios.create({
@@ -19,6 +20,7 @@ const ShieldIcon  = () => <Icon d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" 
 const UserIcon    = () => <Icon d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" />;
 const ChevronIcon = ({ dir = "right" }) => <Icon d={dir === "left" ? "M15 18l-6-6 6-6" : "M9 18l6-6-6-6"} />;
 const RefreshIcon = () => <Icon d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />;
+const EyeIcon      = () => <Icon d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />;
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
 function Toast({ msg, type, onClose }) {
@@ -102,6 +104,7 @@ const tdStyle = { padding: "13px 16px", fontSize: 13, borderBottom: "1px solid #
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function Users() {
+  const navigate = useNavigate();
   const [users, setUsers]       = useState([]);
   const [meta, setMeta]         = useState({ total: 0, totalPages: 1 });
   const [page, setPage]         = useState(1);
@@ -241,6 +244,15 @@ export default function Users() {
                       <td style={tdStyle}><span style={{ fontSize: 12, color: "#94a3b8", fontFamily: "monospace" }}>{fmtDate(u.createdAt)}</span></td>
                       <td style={tdStyle}>
                         <div style={{ display: "flex", gap: 6 }}>
+                          <button
+                            onClick={() => navigate(`/users/${u.id}`)}
+                            title="View details"
+                            style={{ padding: "6px 10px", border: "1px solid #e2e8f0", borderRadius: 7, background: "#fff", color: "#64748b", cursor: "pointer", fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", gap: 4, transition: "all .15s" }}
+                            onMouseEnter={e => { e.currentTarget.style.background = "#eff6ff"; e.currentTarget.style.color = "#1d4ed8"; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = "#fff"; e.currentTarget.style.color = "#64748b"; }}
+                          >
+                            <EyeIcon />
+                          </button>
                           <button
                             disabled={acting === u.id}
                             onClick={() => toggleVerify(u.id, u.isVerified)}

@@ -1,21 +1,29 @@
 import React from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
-import { 
-  LayoutGrid, 
-  Palette, 
-  Users, 
-  Settings, 
-  LogOut, 
-  ChevronRight, 
-  Layers, 
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import {
+  LayoutGrid,
+  Palette,
+  Users,
+  Settings,
+  LogOut,
+  ChevronRight,
+  Layers,
   BarChart3,
   Store,
   ShoppingCart,
   Package,
 } from 'lucide-react';
+import { useAuth } from '../context/useAuth';
 
 const MainLayout = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   const menuItems = [
     { name: 'Dashboard', path: '/',         icon: <BarChart3    size={20} /> },
@@ -67,7 +75,10 @@ const MainLayout = () => {
         </nav>
 
         <div className="p-4 border-t border-gray-100">
-          <button className="w-full flex items-center gap-3 px-4 py-3 text-red-500 font-bold hover:bg-red-50 rounded-2xl transition-colors">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-4 py-3 text-red-500 font-bold hover:bg-red-50 rounded-2xl transition-colors"
+          >
             <LogOut size={20} /> Logout
           </button>
         </div>
@@ -85,9 +96,21 @@ const MainLayout = () => {
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-black text-xs">
-              AD
-            </div>
+            {user?.picture ? (
+              <img
+                src={user.picture}
+                alt={user.name}
+                title={user.email}
+                className="w-8 h-8 rounded-full object-cover"
+              />
+            ) : (
+              <div
+                className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-black text-xs"
+                title={user?.email}
+              >
+                {user?.name?.slice(0, 2).toUpperCase() ?? 'AD'}
+              </div>
+            )}
           </div>
         </header>
 

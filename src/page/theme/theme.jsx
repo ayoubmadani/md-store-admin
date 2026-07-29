@@ -422,7 +422,7 @@ export default function ThemePage() {
     const showToast = (msg, type = "success") => setToast({ msg, type });
 
     const loadTypes = useCallback(async () => {
-        try { const res = await api.get("/theme/type"); setTypes(res.data); }
+        try { const res = await api.get("/theme/type", { params: { isAdmin: true } }); setTypes(res.data); }
         catch { /* silent */ }
     }, []);
 
