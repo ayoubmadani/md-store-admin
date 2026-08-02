@@ -15,6 +15,7 @@ import Stores from './page/stores/stores'
 import Orders from './page/orders/orders'
 import Products from './page/products/products'
 import PlanPage from './page/plan/plan'
+import CouponPage from './page/coupon/coupon'
 import Message from './page/message/message'
 import CategoryNiche from './page/category-niche/category-niche'
 import ImageAdminPage from './page/image/image'
@@ -40,6 +41,7 @@ export default function App() {
                 <Route path='Orders' element={<Orders />} />
                 <Route path='Products' element={<Products />} />
                 <Route path='Plan' element={<PlanPage />} />
+                <Route path='Coupons' element={<CouponPage />} />
                 <Route path='Message' element={<Message />} />
                 <Route path='images' element={<ImageAdminPage />} />
               </Route>

@@ -12,6 +12,7 @@ import {
   Store,
   ShoppingCart,
   Package,
+  Percent,
 } from 'lucide-react';
 import { useAuth } from '../context/useAuth';
 
@@ -34,6 +35,7 @@ const MainLayout = () => {
     { name: 'Products',  path: '/products', icon: <Package      size={20} /> },
     { name: 'Niches',    path: '/niches',   icon: <Layers       size={20} /> },
     { name: 'Plan',      path: '/plan',     icon: <Layers       size={20} /> },
+    { name: 'Coupons',   path: '/coupons',  icon: <Percent      size={20} /> },
     { name: 'Message',      path: '/message',     icon: <Layers       size={20} /> },
     { name: 'Images',      path: '/images',     icon: <Layers       size={20} /> },
   ];
