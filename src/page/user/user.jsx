@@ -16,8 +16,6 @@ const Icon = ({ d, size = 18 }) => (
 const SearchIcon  = () => <Icon d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />;
 const CheckIcon   = () => <Icon d="M20 6 9 17l-5-5" />;
 const XIcon       = () => <Icon d="M18 6 6 18M6 6l12 12" />;
-const ShieldIcon  = () => <Icon d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />;
-const UserIcon    = () => <Icon d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" />;
 const ChevronIcon = ({ dir = "right" }) => <Icon d={dir === "left" ? "M15 18l-6-6 6-6" : "M9 18l6-6-6-6"} />;
 const RefreshIcon = () => <Icon d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />;
 const EyeIcon      = () => <Icon d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />;
@@ -39,10 +37,11 @@ const inp = { width: "100%", padding: "9px 11px", background: "#f8fafc", border:
 const card = { background: "#fff", border: "1px solid #e2e8f0", borderRadius: 14 };
 
 // ─── Role & verified badges ───────────────────────────────────────────────────
+const ROLE_COLORS = { ADMIN: { bg: "#fef3c7", color: "#d97706" }, SUPPORT: { bg: "#e0e7ff", color: "#4338ca" } };
 function RoleBadge({ role }) {
-  const isAdmin = role === "ADMIN";
+  const c = ROLE_COLORS[role] ?? { bg: "#f1f5f9", color: "#64748b" };
   return (
-    <span style={{ padding: "3px 10px", borderRadius: 20, fontSize: 11, fontWeight: 700, background: isAdmin ? "#fef3c7" : "#f1f5f9", color: isAdmin ? "#d97706" : "#64748b" }}>
+    <span style={{ padding: "3px 10px", borderRadius: 20, fontSize: 11, fontWeight: 700, background: c.bg, color: c.color }}>
       {role}
     </span>
   );
@@ -146,9 +145,8 @@ export default function Users() {
     setActing(null);
   };
 
-  const toggleRole = async (id, current) => {
+  const changeRole = async (id, role) => {
     setActing(id);
-    const role = current === "ADMIN" ? "NORMAL_USER" : "ADMIN";
     try {
       await api.patch(`/admin/users/${id}/role`, { role });
       showToast(`Role changed to ${role}`);
@@ -263,16 +261,17 @@ export default function Users() {
                           >
                             {u.isVerified ? <XIcon /> : <CheckIcon />}
                           </button>
-                          <button
+                          <select
                             disabled={acting === u.id}
-                            onClick={() => toggleRole(u.id, u.role)}
-                            title={u.role === "ADMIN" ? "Demote to user" : "Promote to admin"}
-                            style={{ padding: "6px 10px", border: "1px solid #e2e8f0", borderRadius: 7, background: "#fff", color: "#64748b", cursor: acting === u.id ? "not-allowed" : "pointer", fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", gap: 4, transition: "all .15s" }}
-                            onMouseEnter={e => { e.currentTarget.style.background = "#fef3c7"; e.currentTarget.style.color = "#d97706"; }}
-                            onMouseLeave={e => { e.currentTarget.style.background = "#fff"; e.currentTarget.style.color = "#64748b"; }}
+                            value={u.role}
+                            onChange={e => changeRole(u.id, e.target.value)}
+                            title="Change role"
+                            style={{ padding: "6px 8px", border: "1px solid #e2e8f0", borderRadius: 7, background: "#fff", color: "#64748b", cursor: acting === u.id ? "not-allowed" : "pointer", fontSize: 11, fontWeight: 600 }}
                           >
-                            {u.role === "ADMIN" ? <UserIcon /> : <ShieldIcon />}
-                          </button>
+                            <option value="NORMAL_USER">User</option>
+                            <option value="SUPPORT">Support</option>
+                            <option value="ADMIN">Admin</option>
+                          </select>
                         </div>
                       </td>
                     </tr>

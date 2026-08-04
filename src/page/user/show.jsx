@@ -16,7 +16,6 @@ const Icon = ({ d, size = 18 }) => (
 const ArrowLeftIcon = () => <Icon d="M19 12H5M12 19l-7-7 7-7" />;
 const CheckIcon     = () => <Icon d="M20 6 9 17l-5-5" />;
 const XIcon         = () => <Icon d="M18 6 6 18M6 6l12 12" />;
-const ShieldIcon    = () => <Icon d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />;
 const UserIcon      = () => <Icon d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" />;
 const MailIcon      = () => <Icon d="M4 4h16v16H4V4zm0 0 8 8 8-8" size={15} />;
 const PhoneIcon     = () => <Icon d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" size={15} />;
@@ -43,10 +42,11 @@ function Toast({ msg, type, onClose }) {
 const card = { background: "#fff", border: "1px solid #e2e8f0", borderRadius: 14 };
 
 // ─── Badges ───────────────────────────────────────────────────────────────────
+const ROLE_COLORS = { ADMIN: { bg: "#fef3c7", color: "#d97706" }, SUPPORT: { bg: "#e0e7ff", color: "#4338ca" } };
 function RoleBadge({ role }) {
-  const isAdmin = role === "ADMIN";
+  const c = ROLE_COLORS[role] ?? { bg: "#f1f5f9", color: "#64748b" };
   return (
-    <span style={{ padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700, background: isAdmin ? "#fef3c7" : "#f1f5f9", color: isAdmin ? "#d97706" : "#64748b" }}>
+    <span style={{ padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700, background: c.bg, color: c.color }}>
       {role}
     </span>
   );
@@ -314,9 +314,8 @@ export default function UserShow() {
     setActing(false);
   };
 
-  const toggleRole = async () => {
+  const changeRole = async (role) => {
     setActing(true);
-    const role = user.role === "ADMIN" ? "NORMAL_USER" : "ADMIN";
     try {
       await api.patch(`/admin/users/${id}/role`, { role });
       showToast(`Role changed to ${role}`);
@@ -398,15 +397,17 @@ export default function UserShow() {
               >
                 {user.isVerified ? <XIcon /> : <CheckIcon />} {user.isVerified ? "Unverify" : "Verify"}
               </button>
-              <button
+              <select
                 disabled={acting}
-                onClick={toggleRole}
-                style={{ padding: "9px 16px", border: "1px solid #e2e8f0", borderRadius: 8, background: "#fff", color: "#64748b", cursor: acting ? "not-allowed" : "pointer", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 6, transition: "all .15s" }}
-                onMouseEnter={e => { e.currentTarget.style.background = "#fef3c7"; e.currentTarget.style.color = "#d97706"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "#fff"; e.currentTarget.style.color = "#64748b"; }}
+                value={user.role}
+                onChange={e => changeRole(e.target.value)}
+                title="Change role"
+                style={{ padding: "9px 12px", border: "1px solid #e2e8f0", borderRadius: 8, background: "#fff", color: "#64748b", cursor: acting ? "not-allowed" : "pointer", fontSize: 12, fontWeight: 700 }}
               >
-                {user.role === "ADMIN" ? <UserIcon /> : <ShieldIcon />} {user.role === "ADMIN" ? "Demote" : "Promote"}
-              </button>
+                <option value="NORMAL_USER">User</option>
+                <option value="SUPPORT">Support</option>
+                <option value="ADMIN">Admin</option>
+              </select>
             </div>
 
             {/* ── Wallet ── */}
