@@ -25,6 +25,7 @@ const WalletIcon    = ({ size = 15 }) => <Icon d="M21 12V7H5a2 2 0 0 1 0-4h14v4M
 const PlusIcon      = ({ size }) => <Icon d="M12 5v14M5 12h14" size={size} />;
 const PaletteIcon   = () => <Icon d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10a1.5 1.5 0 0 0 1.06-2.56 1.5 1.5 0 0 1 1.06-2.56H16a4 4 0 0 0 4-4c0-5.52-3.58-10-8-10z M6.5 12a1 1 0 1 0 0-2 1 1 0 0 0 0 2z M8.5 8a1 1 0 1 0 0-2 1 1 0 0 0 0 2z M13 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2z M17 9.5a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" size={15} />;
 const SearchIcon    = () => <Icon d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" size={15} />;
+const LayersIcon    = ({ size = 15 }) => <Icon d="M12 2 2 7l10 5 10-5-10-5z M2 17l10 5 10-5 M2 12l10 5 10-5" size={size} />;
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
 function Toast({ msg, type, onClose }) {
@@ -196,6 +197,66 @@ function AssignThemeModal({ onClose, onAssign, assigning }) {
   );
 }
 
+// ─── Assign plan modal ────────────────────────────────────────────────────────
+function AssignPlanModal({ onClose, onAssign, assigning }) {
+  const [plans, setPlans] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [billingInterval, setBillingInterval] = useState("month");
+
+  useEffect(() => {
+    api.get("/plans")
+      .then(r => setPlans(r.data.data ?? r.data ?? []))
+      .catch(() => setPlans([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  return (
+    <ModalShell title="Assign Plan to User" onClose={onClose}>
+      <div style={{ display: "flex", gap: 6, marginBottom: 14, background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, padding: 4 }}>
+        {["month", "year"].map(iv => (
+          <button key={iv} onClick={() => setBillingInterval(iv)}
+            style={{ flex: 1, padding: "7px 0", border: "none", borderRadius: 6, background: billingInterval === iv ? "#fff" : "transparent", color: billingInterval === iv ? "#0f172a" : "#94a3b8", fontWeight: 700, fontSize: 12, cursor: "pointer", boxShadow: billingInterval === iv ? "0 1px 3px rgba(0,0,0,.1)" : "none", textTransform: "capitalize" }}>
+            {iv}ly
+          </button>
+        ))}
+      </div>
+      {loading ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {Array(3).fill(0).map((_, i) => <div key={i} style={{ height: 52, borderRadius: 8, background: "#f1f5f9" }} />)}
+        </div>
+      ) : plans.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "20px 0", color: "#94a3b8", fontSize: 13 }}>No plans found</div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 340, overflow: "auto" }}>
+          {plans.map(p => {
+            const price = billingInterval === "year" ? p.yearlyPrice : p.monthlyPrice;
+            return (
+              <div key={p.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", background: "#f8fafc", borderRadius: 8 }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ fontWeight: 600, fontSize: 13, color: "#0f172a", textTransform: "capitalize" }}>{p.name}</span>
+                    {!p.isActive && (
+                      <span style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8", background: "#f1f5f9", padding: "1px 6px", borderRadius: 20 }}>Inactive</span>
+                    )}
+                  </div>
+                  <div style={{ fontSize: 11, color: "#94a3b8" }}>{Number(price) > 0 ? `${fmtNum(price)} ${p.currency ?? "DZD"} / ${billingInterval}` : "Free"}</div>
+                </div>
+                <button
+                  disabled={assigning}
+                  onClick={() => onAssign(p.id, billingInterval)}
+                  style={{ padding: "6px 12px", border: "1px solid #e2e8f0", borderRadius: 7, background: "#fff", color: "#2563eb", cursor: assigning ? "not-allowed" : "pointer", fontSize: 11, fontWeight: 700, flexShrink: 0 }}
+                >
+                  Assign
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </ModalShell>
+  );
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function UserShow() {
   const { id } = useParams();
@@ -218,6 +279,11 @@ export default function UserShow() {
   const [recharging, setRecharging]           = useState(false);
   const [showAssignTheme, setShowAssignTheme] = useState(false);
   const [assigning, setAssigning]             = useState(false);
+  const [subscription, setSubscription]       = useState(null);
+  const [subAvailable, setSubAvailable]       = useState(false);
+  const [subLoading, setSubLoading]           = useState(true);
+  const [showAssignPlan, setShowAssignPlan]   = useState(false);
+  const [assigningPlan, setAssigningPlan]     = useState(false);
 
   const showToast = (msg, type = "success") => setToast({ msg, type });
 
@@ -264,8 +330,8 @@ export default function UserShow() {
       showToast("Wallet recharged ✓");
       setShowRecharge(false);
       loadWallet();
-    } catch {
-      showToast("Recharge failed — endpoint not available on the backend yet", "error");
+    } catch (err) {
+      showToast(err?.response?.data?.message ?? "Recharge failed", "error");
     }
     setRecharging(false);
   };
@@ -277,10 +343,35 @@ export default function UserShow() {
       showToast("Theme assigned ✓");
       setShowAssignTheme(false);
       load();
-    } catch {
-      showToast("Assign failed — endpoint not available on the backend yet", "error");
+    } catch (err) {
+      showToast(err?.response?.data?.message ?? "Assign failed", "error");
     }
     setAssigning(false);
+  };
+
+  const loadSubscription = useCallback(async () => {
+    setSubLoading(true);
+    try {
+      const r = await api.get(`/admin/users/${id}/subscription`);
+      setSubscription(r.data.data ?? r.data);
+      setSubAvailable(true);
+    } catch { setSubAvailable(false); }
+    setSubLoading(false);
+  }, [id]);
+
+  useEffect(() => { loadSubscription(); }, [loadSubscription]);
+
+  const submitAssignPlan = async (planId, interval) => {
+    setAssigningPlan(true);
+    try {
+      await api.post(`/admin/users/${id}/plan`, { planId, interval });
+      showToast("Plan assigned ✓");
+      setShowAssignPlan(false);
+      loadSubscription();
+    } catch (err) {
+      showToast(err?.response?.data?.message ?? "Assign failed", "error");
+    }
+    setAssigningPlan(false);
   };
 
   const storeIds = user?.stores?.map(s => s.id).join(",") ?? "";
@@ -389,6 +480,14 @@ export default function UserShow() {
                 <PaletteIcon /> Assign Theme
               </button>
               <button
+                onClick={() => setShowAssignPlan(true)}
+                style={{ padding: "9px 16px", border: "1px solid #e2e8f0", borderRadius: 8, background: "#fff", color: "#64748b", cursor: "pointer", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 6, transition: "all .15s" }}
+                onMouseEnter={e => { e.currentTarget.style.background = "#eef2ff"; e.currentTarget.style.color = "#4f46e5"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "#fff"; e.currentTarget.style.color = "#64748b"; }}
+              >
+                <LayersIcon /> Assign Plan
+              </button>
+              <button
                 disabled={acting}
                 onClick={toggleVerify}
                 style={{ padding: "9px 16px", border: "1px solid #e2e8f0", borderRadius: 8, background: "#fff", color: "#64748b", cursor: acting ? "not-allowed" : "pointer", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 6, transition: "all .15s" }}
@@ -423,7 +522,7 @@ export default function UserShow() {
                   ) : walletAvailable ? (
                     <div style={{ fontSize: 22, fontWeight: 800, color: "#16a34a" }}>{fmtNum(wallet?.balance)} {wallet?.currency ?? "DZD"}</div>
                   ) : (
-                    <div style={{ fontSize: 13, fontWeight: 600, color: "#cbd5e1" }} title="Wallet endpoint not implemented on the backend yet">Not available yet</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "#cbd5e1" }} title="Failed to load wallet balance">Not available</div>
                   )}
                 </div>
               </div>
@@ -434,6 +533,36 @@ export default function UserShow() {
                 onMouseLeave={e => e.currentTarget.style.background = "#16a34a"}
               >
                 <PlusIcon size={14} /> Recharge Wallet
+              </button>
+            </div>
+
+            {/* ── Plan ── */}
+            <div style={{ ...card, padding: 20, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 18, flexWrap: "wrap", background: "linear-gradient(135deg,#eef2ff,#f8fafc)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: "#e0e7ff", color: "#4f46e5", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <LayersIcon size={20} />
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: ".06em" }}>Current Plan</div>
+                  {subLoading ? (
+                    <div style={{ width: 110, height: 22, borderRadius: 6, background: "#e2e8f0", marginTop: 4 }} />
+                  ) : subAvailable && subscription ? (
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 2 }}>
+                      <span style={{ fontSize: 22, fontWeight: 800, color: "#4f46e5", textTransform: "capitalize" }}>{subscription.plan?.name ?? "—"}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: "#64748b" }}>· {subscription.interval}ly · expires {fmtDate(subscription.endDate)}</span>
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "#cbd5e1" }} title="Failed to load subscription">Not available</div>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAssignPlan(true)}
+                style={{ padding: "10px 18px", border: "none", borderRadius: 9, background: "#4f46e5", color: "#fff", cursor: "pointer", fontSize: 13, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}
+                onMouseEnter={e => e.currentTarget.style.background = "#4338ca"}
+                onMouseLeave={e => e.currentTarget.style.background = "#4f46e5"}
+              >
+                <LayersIcon size={14} /> {subscription ? "Change Plan" : "Assign Plan"}
               </button>
             </div>
 
@@ -487,7 +616,7 @@ export default function UserShow() {
                   ) : !txAvailable ? (
                     <div style={{ textAlign: "center", padding: "24px 0", color: "#94a3b8", fontSize: 13 }}>
                       <div style={{ fontSize: 24, marginBottom: 6 }}>💳</div>
-                      No wallet data available — this endpoint isn't implemented on the backend yet.
+                      Failed to load wallet transactions.
                     </div>
                   ) : transactions.length === 0 ? (
                     <div style={{ textAlign: "center", padding: "24px 0", color: "#94a3b8", fontSize: 13 }}>No transactions yet</div>
@@ -546,6 +675,7 @@ export default function UserShow() {
       {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
       {showRecharge && <RechargeModal onClose={() => setShowRecharge(false)} onSubmit={submitRecharge} loading={recharging} />}
       {showAssignTheme && <AssignThemeModal onClose={() => setShowAssignTheme(false)} onAssign={submitAssignTheme} assigning={assigning} />}
+      {showAssignPlan && <AssignPlanModal onClose={() => setShowAssignPlan(false)} onAssign={submitAssignPlan} assigning={assigningPlan} />}
     </>
   );
 }
