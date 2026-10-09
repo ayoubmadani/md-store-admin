@@ -12,12 +12,17 @@ export default function Login() {
     return <Navigate to="/" replace />;
   }
 
-  const handleSuccess = (credentialResponse) => {
+  const [loading, setLoading] = useState(false);
+
+  const handleSuccess = async (credentialResponse) => {
+    setLoading(true);
     try {
-      login(credentialResponse.credential);
+      await login(credentialResponse.credential);
       setError('');
     } catch (err) {
       setError(err.message || 'تعذر تسجيل الدخول');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -36,6 +41,8 @@ export default function Login() {
           onSuccess={handleSuccess}
           onError={() => setError('تعذر تسجيل الدخول عبر Google')}
         />
+
+        {loading && <p className="text-sm font-bold text-gray-400">...</p>}
 
         {error && (
           <p className="text-sm font-bold text-red-500 text-center">{error}</p>

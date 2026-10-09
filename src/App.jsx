@@ -19,6 +19,7 @@ import CouponPage from './page/coupon/coupon'
 import Message from './page/message/message'
 import CategoryNiche from './page/category-niche/category-niche'
 import ImageAdminPage from './page/image/image'
+import ConfirmationAdmin from './page/confirmation/confirmation'
 
 export default function App() {
   return (
@@ -44,6 +45,7 @@ export default function App() {
                 <Route path='Coupons' element={<CouponPage />} />
                 <Route path='Message' element={<Message />} />
                 <Route path='images' element={<ImageAdminPage />} />
+                <Route path='confirmation' element={<ConfirmationAdmin />} />
               </Route>
             </Route>
           </Routes>

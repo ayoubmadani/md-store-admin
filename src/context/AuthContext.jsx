@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { jwtDecode } from 'jwt-decode';
 import { googleLogout } from '@react-oauth/google';
+import axios from 'axios';
 import { AuthContext } from './auth-context';
+import { STORAGE_KEY } from '../api-auth';
 
-const STORAGE_KEY = 'admin_session';
 
 function readSession() {
   const raw = localStorage.getItem(STORAGE_KEY);
@@ -11,7 +12,8 @@ function readSession() {
 
   try {
     const session = JSON.parse(raw);
-    if (!session.exp || session.exp * 1000 <= Date.now()) {
+    // جلسة قديمة بدون توكن API (قبل حماية مسارات الأدمن) لا تعمل
+    if (!session.token || !session.exp || session.exp * 1000 <= Date.now()) {
       localStorage.removeItem(STORAGE_KEY);
       return null;
     }
@@ -32,19 +34,25 @@ export function AuthProvider({ children }) {
     return () => clearTimeout(timer);
   }, [user]);
 
-  const login = (credential) => {
-    const payload = jwtDecode(credential);
-    const adminEmail = import.meta.env.VITE_ADMIN_EMAIL;
-
-    if (!payload.email_verified || payload.email !== adminEmail) {
-      throw new Error('هذا الحساب غير مصرح له بالدخول');
+  /** Google credential ← يتحقق منه الـ API ويعيد توكن API (لحساب ADMIN فقط) */
+  const login = async (credential) => {
+    let data;
+    try {
+      ({ data } = await axios.post(`${import.meta.env.VITE_API_URL}/auth/admin/google`, { credential }));
+    } catch (err) {
+      const status = err.response?.status;
+      throw new Error(status === 403 || status === 401 ? 'هذا الحساب غير مصرح له بالدخول' : 'تعذر الاتصال بالخادم');
     }
 
+    const google = jwtDecode(credential);
+    const api = jwtDecode(data.access_token);
     const session = {
-      email: payload.email,
-      name: payload.name,
-      picture: payload.picture,
-      exp: payload.exp,
+      email: data.email,
+      name: data.name || google.name,
+      picture: google.picture,
+      token: data.access_token,
+      // الجلسة تنتهي مع توكن الـ API (وإن لم يكن له انتهاء، مع توكن Google)
+      exp: api.exp ?? google.exp,
     };
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
