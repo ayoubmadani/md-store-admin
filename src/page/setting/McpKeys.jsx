@@ -7,6 +7,9 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+// نفس خادم MCP الذي تستعمله لوحة التاجر — الرابط الكامل = MCP_URL/<المفتاح>
+const MCP_URL = import.meta.env.VITE_MCP_URL || 'https://mcp.mdstore.top/mcp';
+
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—');
 
 const STATUS = {
@@ -77,9 +80,15 @@ export default function McpKeys() {
       {newKey && (
         <div className="border border-amber-200 bg-amber-50 rounded-xl p-4 mb-4">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-bold text-amber-800">Copy your key now — it won't be shown again</p>
+            <p className="text-sm font-bold text-amber-800">Copy now — it won't be shown again</p>
             <button onClick={() => setNewKey(null)} className="text-amber-500 hover:text-amber-700"><X size={15} /></button>
           </div>
+          <p className="text-[11px] font-bold text-amber-700 uppercase tracking-wide mb-1">Connection URL for Claude (MCP)</p>
+          <CopyField value={`${MCP_URL}/${newKey}`} />
+          <p className="text-[11px] text-amber-700 mt-1.5 mb-3">
+            Paste it in the “URL” field when adding a custom connector in Claude, with “No authentication”. Don't share it.
+          </p>
+          <p className="text-[11px] font-bold text-amber-700 uppercase tracking-wide mb-1">Key only</p>
           <CopyField value={newKey} />
         </div>
       )}
