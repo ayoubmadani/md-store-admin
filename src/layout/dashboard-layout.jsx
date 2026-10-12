@@ -14,6 +14,7 @@ import {
   Package,
   Percent,
   PhoneCall,
+  Sparkles,
 } from 'lucide-react';
 import { useAuth } from '../context/useAuth';
 
@@ -30,6 +31,7 @@ const MainLayout = () => {
   const menuItems = [
     { name: 'Dashboard', path: '/',         icon: <BarChart3    size={20} /> },
     { name: 'Themes',    path: '/themes',   icon: <Palette      size={20} /> },
+    { name: 'Custom Themes', path: '/custom-themes', icon: <Sparkles size={20} /> },
     { name: 'Users',     path: '/users',    icon: <Users        size={20} /> },
     { name: 'Stores',    path: '/stores',   icon: <Store        size={20} /> },
     { name: 'Orders',    path: '/orders',   icon: <ShoppingCart size={20} /> },

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Loader2, PhoneCall, Save } from 'lucide-react';
 import McpKeys from './McpKeys';
+import CustomThemeSettings from './CustomThemeSettings';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
@@ -89,6 +90,8 @@ export default function Setting() {
           </form>
         )}
       </section>
+
+      <CustomThemeSettings />
 
       <McpKeys />
     </div>

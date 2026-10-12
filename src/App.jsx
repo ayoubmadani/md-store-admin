@@ -9,6 +9,7 @@ import Theme  from './page/theme/theme'
 import Dashboard from './page/dashboard/dashboard'
 import Niche from './page/niche/niche'
 import Setting from './page/setting/setting'
+import CustomThemes from './page/custom-themes/custom-themes'
 import User from './page/user/user'
 import UserShow from './page/user/show'
 import Stores from './page/stores/stores'
@@ -36,6 +37,7 @@ export default function App() {
                 <Route path='niches' element={<Niche />} />
                 <Route path='categories' element={<CategoryNiche />} />
                 <Route path='settings' element={<Setting />} />
+                <Route path='custom-themes' element={<CustomThemes />} />
                 <Route path='users' element={<User />} />
                 <Route path='users/:id' element={<UserShow />} />
                 <Route path='Stores' element={<Stores />} />
