@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Plus, Pencil, Trash2, ToggleLeft, ToggleRight,
   CheckCircle2, XCircle, X, Loader2,
-  Store, Package, FileText, Bell, TrendingUp,
+  Store, Package, FileText, Bell, TrendingUp, Globe,
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -17,7 +17,7 @@ const api = {
 };
 
 const INITIAL_FEATURES = {
-  storeNumber: 1, productNumber: 10, landingPageNumber: 0,
+  storeNumber: 1, productNumber: 10, landingPageNumber: 0, domainNumber: 3,
   isNtfy: false, pixelTiktokNumber: 0, pixelFacebookNumber: 0,
   commission: 0, theme: null,
 };
@@ -39,6 +39,7 @@ const planToForm = (plan) => ({
     storeNumber:         plan.features?.storeNumber         ?? 1,
     productNumber:       plan.features?.productNumber       ?? 10,
     landingPageNumber:   plan.features?.landingPageNumber   ?? 0,
+    domainNumber:        plan.features?.domainNumber        ?? 3,
     isNtfy:              plan.features?.isNtfy              ?? false,
     pixelTiktokNumber:   plan.features?.pixelTiktokNumber   ?? 0,
     pixelFacebookNumber: plan.features?.pixelFacebookNumber ?? 0,
@@ -126,6 +127,7 @@ const PlanCard = ({ plan, onEdit, onDelete, onToggle }) => {
         <FeaturePill icon={Store}      label="Stores"        value={f.storeNumber ?? 0} />
         <FeaturePill icon={Package}    label="Products"      value={f.productNumber ?? 0} />
         <FeaturePill icon={FileText}   label="Landing pages" value={f.landingPageNumber ?? 0} />
+        <FeaturePill icon={Globe}      label="Domains / store" value={f.domainNumber ?? 3} />
         <FeaturePill icon={TrendingUp} label="% Commission"  value={Number(f.commission ?? 0).toFixed(1)} />
         {f.isNtfy && (
           <div className="col-span-2 flex items-center gap-1.5 bg-blue-50 rounded-xl px-2.5 py-1.5">
@@ -275,6 +277,9 @@ const PlanModal = ({ initial, mode, onClose, onSubmit, loading }) => {
               </Field>
               <Field label="Landing pages">
                 <NumberInput value={form.features.landingPageNumber} onChange={v => setFeature('landingPageNumber', v)} />
+              </Field>
+              <Field label="Domains per store">
+                <NumberInput value={form.features.domainNumber} onChange={v => setFeature('domainNumber', v)} />
               </Field>
               <Field label="Commission %">
                 <NumberInput value={form.features.commission} onChange={v => setFeature('commission', v)} step={0.1} />
