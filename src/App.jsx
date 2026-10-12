@@ -35,7 +35,7 @@ export default function App() {
                 <Route path='themes' element={<Theme />} />
                 <Route path='niches' element={<Niche />} />
                 <Route path='categories' element={<CategoryNiche />} />
-                <Route path='Settings' element={<Setting />} />
+                <Route path='settings' element={<Setting />} />
                 <Route path='users' element={<User />} />
                 <Route path='users/:id' element={<UserShow />} />
                 <Route path='Stores' element={<Stores />} />
