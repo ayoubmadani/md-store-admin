@@ -15,6 +15,7 @@ import {
   Percent,
   PhoneCall,
   Sparkles,
+  Globe2,
 } from 'lucide-react';
 import { useAuth } from '../context/useAuth';
 
@@ -36,6 +37,7 @@ const MainLayout = () => {
     { name: 'Stores',    path: '/stores',   icon: <Store        size={20} /> },
     { name: 'Orders',    path: '/orders',   icon: <ShoppingCart size={20} /> },
     { name: 'Confirmation', path: '/confirmation', icon: <PhoneCall size={20} /> },
+    { name: 'Locations', path: '/locations', icon: <Globe2 size={20} /> },
     { name: 'Products',  path: '/products', icon: <Package      size={20} /> },
     { name: 'Niches',    path: '/niches',   icon: <Layers       size={20} /> },
     { name: 'Plan',      path: '/plan',     icon: <Layers       size={20} /> },
