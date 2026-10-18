@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Plus, Pencil, Trash2, ToggleLeft, ToggleRight,
   CheckCircle2, XCircle, X, Loader2,
-  Store, Package, FileText, Bell, TrendingUp, Globe, Users, Download, Truck,
+  Store, Package, FileText, Bell, TrendingUp, Globe, Users, Download, Truck, Images,
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -17,7 +17,7 @@ const api = {
 };
 
 const INITIAL_FEATURES = {
-  storeNumber: 1, productNumber: 10, landingPageNumber: 0, domainNumber: 3, maxMembers: 0, aliexpressImportsPerDay: 10, shippingProfileNumber: 3,
+  storeNumber: 1, productNumber: 10, landingPageNumber: 0, domainNumber: 3, maxMembers: 0, aliexpressImportsPerDay: 10, shippingProfileNumber: 3, imagePagesPerMonth: 0,
   isNtfy: false, pixelTiktokNumber: 0, pixelFacebookNumber: 0,
   commission: 0, theme: null,
 };
@@ -43,6 +43,7 @@ const planToForm = (plan) => ({
     maxMembers:          plan.features?.maxMembers          ?? 0,
     aliexpressImportsPerDay: plan.features?.aliexpressImportsPerDay ?? 10,
     shippingProfileNumber: plan.features?.shippingProfileNumber ?? 3,
+    imagePagesPerMonth: plan.features?.imagePagesPerMonth ?? 0,
     isNtfy:              plan.features?.isNtfy              ?? false,
     pixelTiktokNumber:   plan.features?.pixelTiktokNumber   ?? 0,
     pixelFacebookNumber: plan.features?.pixelFacebookNumber ?? 0,
@@ -134,6 +135,7 @@ const PlanCard = ({ plan, onEdit, onDelete, onToggle }) => {
         <FeaturePill icon={Users}      label="Team members"  value={f.maxMembers ?? 0} />
         <FeaturePill icon={Download}   label="AliExpress / day" value={f.aliexpressImportsPerDay ?? 10} />
         <FeaturePill icon={Truck}      label="Shipping accounts" value={f.shippingProfileNumber ?? 3} />
+        <FeaturePill icon={Images}     label="Image pages / month" value={f.imagePagesPerMonth ?? 0} />
         <FeaturePill icon={TrendingUp} label="% Commission"  value={Number(f.commission ?? 0).toFixed(1)} />
         {f.isNtfy && (
           <div className="col-span-2 flex items-center gap-1.5 bg-blue-50 rounded-xl px-2.5 py-1.5">
@@ -295,6 +297,9 @@ const PlanModal = ({ initial, mode, onClose, onSubmit, loading }) => {
               </Field>
               <Field label="Shipping accounts (incl. default)">
                 <NumberInput value={form.features.shippingProfileNumber} onChange={v => setFeature('shippingProfileNumber', v)} />
+              </Field>
+              <Field label="Image pages / month (0 = off)">
+                <NumberInput value={form.features.imagePagesPerMonth} onChange={v => setFeature('imagePagesPerMonth', v)} />
               </Field>
               <Field label="Commission %">
                 <NumberInput value={form.features.commission} onChange={v => setFeature('commission', v)} step={0.1} />
