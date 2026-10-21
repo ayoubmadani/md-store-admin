@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Loader2, PhoneCall, Save } from 'lucide-react';
 import McpKeys from './McpKeys';
 import CustomThemeSettings from './CustomThemeSettings';
+import BinanceSettings from './BinanceSettings';
 import AliexpressSettings from './AliexpressSettings';
 
 const api = axios.create({
@@ -95,6 +96,7 @@ export default function Setting() {
       <AliexpressSettings />
 
       <CustomThemeSettings />
+      <BinanceSettings />
 
       <McpKeys />
     </div>
