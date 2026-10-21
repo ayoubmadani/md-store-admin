@@ -30,6 +30,7 @@ export default function BinanceSettings() {
         binanceTrc20Address: (form.binanceTrc20Address || '').trim(),
         binanceBep20Address: (form.binanceBep20Address || '').trim(),
         binanceUid: (form.binanceUid || '').trim(),
+        binancePayLink: (form.binancePayLink || '').trim(),
       });
       setForm(data);
       setMessage({ type: 'success', text: 'Saved' });
@@ -74,6 +75,12 @@ export default function BinanceSettings() {
               <input type="number" min="1" step="0.5" required value={form.usdtRateDzd ?? ''}
                 onChange={(e) => setForm({ ...form, usdtRateDzd: e.target.value })} className={inputCls} />
               <p className="text-[11px] text-gray-400">The merchant pays amount ÷ this rate in USDT.</p>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Binance Pay link (QR)</label>
+              <input dir="ltr" value={form.binancePayLink ?? ''} placeholder="https://app.binance.com/qr/…"
+                onChange={(e) => setForm({ ...form, binancePayLink: e.target.value })} className={`${inputCls} font-mono`} />
+              <p className="text-[11px] text-gray-400">Binance app → Pay → Receive → Share → copy link. Shown to merchants as a QR code and a "Pay with Binance" button.</p>
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Binance UID (Binance Pay)</label>
