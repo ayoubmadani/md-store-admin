@@ -29,6 +29,7 @@ export default function BinanceSettings() {
         usdtRateDzd: Number(form.usdtRateDzd),
         binanceTrc20Address: (form.binanceTrc20Address || '').trim(),
         binanceBep20Address: (form.binanceBep20Address || '').trim(),
+        binanceUid: (form.binanceUid || '').trim(),
       });
       setForm(data);
       setMessage({ type: 'success', text: 'Saved' });
@@ -73,6 +74,12 @@ export default function BinanceSettings() {
               <input type="number" min="1" step="0.5" required value={form.usdtRateDzd ?? ''}
                 onChange={(e) => setForm({ ...form, usdtRateDzd: e.target.value })} className={inputCls} />
               <p className="text-[11px] text-gray-400">The merchant pays amount ÷ this rate in USDT.</p>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Binance UID (Binance Pay)</label>
+              <input dir="ltr" inputMode="numeric" value={form.binanceUid ?? ''} placeholder="535950835"
+                onChange={(e) => setForm({ ...form, binanceUid: e.target.value })} className={`${inputCls} font-mono`} />
+              <p className="text-[11px] text-gray-400">Merchants send USDT with Binance Pay to this UID — instant, no fee. Your UID is on the Binance dashboard.</p>
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wide">TRC20 address (Tron)</label>
