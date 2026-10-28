@@ -142,6 +142,29 @@ function RechargeModal({ onClose, onSubmit, loading }) {
   );
 }
 
+// ─── Delete account modal ─────────────────────────────────────────────────────
+// حذف نهائي: يجب كتابة البريد كما هو للتأكيد
+function DeleteUserModal({ email, onClose, onConfirm, loading }) {
+  const [typed, setTyped] = useState("");
+  const ok = typed.trim().toLowerCase() === String(email).toLowerCase();
+  return (
+    <ModalShell title="Delete account" onClose={onClose}>
+      <p style={{ margin: "0 0 12px", fontSize: 13, color: "#475569", lineHeight: 1.6 }}>
+        This permanently deletes <b>{email}</b> with all its stores, products, orders, subscriptions, wallet and images. This cannot be undone.
+      </p>
+      <label style={{ fontSize: 12, fontWeight: 700, color: "#64748b", display: "block", marginBottom: 6 }}>Type the email to confirm</label>
+      <input value={typed} onChange={e => setTyped(e.target.value)} placeholder={email} style={inp} autoFocus />
+      <button
+        disabled={loading || !ok}
+        onClick={onConfirm}
+        style={{ width: "100%", marginTop: 16, padding: "10px 0", border: "none", borderRadius: 8, background: ok ? "#dc2626" : "#e2e8f0", color: "#fff", fontWeight: 700, fontSize: 13, cursor: (loading || !ok) ? "not-allowed" : "pointer" }}
+      >
+        {loading ? "Deleting…" : "Delete permanently"}
+      </button>
+    </ModalShell>
+  );
+}
+
 // ─── Assign theme modal ───────────────────────────────────────────────────────
 function AssignThemeModal({ onClose, onAssign, assigning }) {
   const [themes, setThemes] = useState([]);
@@ -284,6 +307,8 @@ export default function UserShow() {
   const [subLoading, setSubLoading]           = useState(true);
   const [showAssignPlan, setShowAssignPlan]   = useState(false);
   const [assigningPlan, setAssigningPlan]     = useState(false);
+  const [showDelete, setShowDelete]           = useState(false);
+  const [deleting, setDeleting]               = useState(false);
 
   const showToast = (msg, type = "success") => setToast({ msg, type });
 
@@ -405,6 +430,17 @@ export default function UserShow() {
     setActing(false);
   };
 
+  const deleteUser = async () => {
+    setDeleting(true);
+    try {
+      await api.delete(`/admin/users/${id}`);
+      navigate("/users");
+    } catch (err) {
+      showToast(err?.response?.data?.message ?? "Delete failed", "error");
+      setDeleting(false);
+    }
+  };
+
   const changeRole = async (role) => {
     setActing(true);
     try {
@@ -507,6 +543,16 @@ export default function UserShow() {
                 <option value="SUPPORT">Support</option>
                 <option value="ADMIN">Admin</option>
               </select>
+              {user.role !== "ADMIN" && (
+                <button
+                  onClick={() => setShowDelete(true)}
+                  style={{ marginLeft: "auto", padding: "9px 16px", border: "1px solid #fecaca", borderRadius: 8, background: "#fff", color: "#dc2626", cursor: "pointer", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 6, transition: "all .15s" }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "#fee2e2"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "#fff"; }}
+                >
+                  <XIcon /> Delete account
+                </button>
+              )}
             </div>
 
             {/* ── Wallet ── */}
@@ -675,6 +721,7 @@ export default function UserShow() {
       {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
       {showRecharge && <RechargeModal onClose={() => setShowRecharge(false)} onSubmit={submitRecharge} loading={recharging} />}
       {showAssignTheme && <AssignThemeModal onClose={() => setShowAssignTheme(false)} onAssign={submitAssignTheme} assigning={assigning} />}
+      {showDelete && user && <DeleteUserModal email={user.email} onClose={() => setShowDelete(false)} onConfirm={deleteUser} loading={deleting} />}
       {showAssignPlan && <AssignPlanModal onClose={() => setShowAssignPlan(false)} onAssign={submitAssignPlan} assigning={assigningPlan} />}
     </>
   );
