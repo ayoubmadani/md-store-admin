@@ -217,5 +217,32 @@
     "stock_n": "Stock: {{n}}",
     "soft_delete": "Soft delete",
     "hard_delete": "Permanent delete"
+  },
+  "confirm": {
+    "title": "Order confirmation",
+    "subtitle": "Who may work as an order confirmer (confirm app), and which confirmation companies merchants can see.",
+    "access_title": "Confirmer access",
+    "companies_title": "Confirmation companies",
+    "a_requested": "Requests",
+    "a_granted": "Granted",
+    "a_revoked": "Revoked",
+    "c_pending": "Pending",
+    "c_approved": "Approved",
+    "c_suspended": "Suspended",
+    "granted_to": "Access granted to {{name}}",
+    "revoked_for": "Access revoked for {{name}}",
+    "nothing": "Nothing here",
+    "company": "Company",
+    "access": "Access",
+    "commission": "Commission",
+    "commission_value": "{{n}} DA / delivered",
+    "grant": "Grant",
+    "reject": "Reject",
+    "revoke": "Revoke",
+    "approve": "Approve",
+    "suspend": "Suspend",
+    "s_requested": "Pending",
+    "s_granted": "Granted",
+    "s_revoked": "Revoked"
   }
 }

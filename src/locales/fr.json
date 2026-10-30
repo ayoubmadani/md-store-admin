@@ -217,5 +217,32 @@
     "stock_n": "Stock : {{n}}",
     "soft_delete": "Supprimer (récupérable)",
     "hard_delete": "Suppression définitive"
+  },
+  "confirm": {
+    "title": "Confirmation des commandes",
+    "subtitle": "Qui peut travailler comme confirmateur (app de confirmation), et quelles sociétés de confirmation les marchands voient.",
+    "access_title": "Accès des confirmateurs",
+    "companies_title": "Sociétés de confirmation",
+    "a_requested": "Demandes",
+    "a_granted": "Acceptés",
+    "a_revoked": "Révoqués",
+    "c_pending": "En attente",
+    "c_approved": "Approuvées",
+    "c_suspended": "Suspendues",
+    "granted_to": "Accès accordé à {{name}}",
+    "revoked_for": "Accès retiré à {{name}}",
+    "nothing": "Rien ici",
+    "company": "Société",
+    "access": "Accès",
+    "commission": "Commission",
+    "commission_value": "{{n}} DA / commande livrée",
+    "grant": "Accorder",
+    "reject": "Refuser",
+    "revoke": "Retirer",
+    "approve": "Approuver",
+    "suspend": "Suspendre",
+    "s_requested": "En attente",
+    "s_granted": "Accepté",
+    "s_revoked": "Révoqué"
   }
 }

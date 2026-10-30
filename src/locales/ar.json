@@ -217,5 +217,32 @@
     "stock_n": "المخزون: {{n}}",
     "soft_delete": "حذف (قابل للاستعادة)",
     "hard_delete": "حذف نهائي"
+  },
+  "confirm": {
+    "title": "تأكيد الطلبات",
+    "subtitle": "من يمكنه العمل كمؤكِّد طلبات (تطبيق التأكيد)، وأي شركات التأكيد يراها التجار.",
+    "access_title": "صلاحية المؤكِّدين",
+    "companies_title": "شركات التأكيد",
+    "a_requested": "طلبات",
+    "a_granted": "مقبولون",
+    "a_revoked": "ملغون",
+    "c_pending": "قيد المراجعة",
+    "c_approved": "معتمدة",
+    "c_suspended": "موقوفة",
+    "granted_to": "مُنحت الصلاحية لـ {{name}}",
+    "revoked_for": "أُلغيت صلاحية {{name}}",
+    "nothing": "لا شيء هنا",
+    "company": "الشركة",
+    "access": "الصلاحية",
+    "commission": "العمولة",
+    "commission_value": "{{n}} دج / طلب مسلَّم",
+    "grant": "منح",
+    "reject": "رفض",
+    "revoke": "إلغاء",
+    "approve": "اعتماد",
+    "suspend": "إيقاف",
+    "s_requested": "بانتظار الموافقة",
+    "s_granted": "مقبول",
+    "s_revoked": "ملغى"
   }
 }
