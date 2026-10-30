@@ -1,10 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Lock } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/useAuth';
 
 // شاشة القفل: الخادم يختار 3 أسماء عشوائية، مثلاً ZZMMHH، والمدير يُدخل
 // الرقمين 1-2 من رمز ZZ + الرقمين 3-4 من MM + الرقمين 5-6 من HH
 export default function PinLock() {
+  const { t } = useTranslation();
   const { user, getPinChallenge, unlock, logout } = useAuth();
   const [challenge, setChallenge] = useState(null);
   const [pin, setPin] = useState('');
@@ -16,7 +18,7 @@ export default function PinLock() {
     try {
       setChallenge(await getPinChallenge());
     } catch {
-      setError('تعذر الاتصال بالخادم');
+      setError(t('auth.server_error'));
     }
   }, [getPinChallenge]);
 
@@ -37,19 +39,20 @@ export default function PinLock() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50" dir="rtl">
+    <div className="min-h-dvh flex items-center justify-center bg-gray-50 p-4">
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-sm bg-white border border-gray-200 rounded-2xl shadow-sm p-8 flex flex-col items-center gap-5"
       >
-        <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center">
-          <Lock className="text-blue-600" size={22} />
+        <div className="relative">
+          <img src="/icon-192.png" alt="" className="w-16 h-16" />
+          <span className="absolute -top-2 -end-2 w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center ring-2 ring-white"><Lock size={14} /></span>
         </div>
 
         <p className="text-sm font-bold text-gray-500 text-center">{user?.email}</p>
 
         <p className="text-base font-black text-gray-800 text-center">
-          أدخل الرمز{' '}
+          {t('auth.enter_pin')}{' '}
           <span className="text-blue-600 tracking-widest" dir="ltr">{challenge?.label ?? '…'}</span>
         </p>
 
@@ -70,13 +73,13 @@ export default function PinLock() {
           disabled={loading || !challenge || pin.length !== 6}
           className="w-full bg-blue-600 text-white font-bold rounded-xl py-3 disabled:opacity-50"
         >
-          {loading ? '…' : 'دخول'}
+          {loading ? '…' : t('auth.enter')}
         </button>
 
         {error && <p className="text-sm font-bold text-red-500 text-center">{error}</p>}
 
         <button type="button" onClick={logout} className="text-xs font-bold text-gray-400 hover:text-gray-600">
-          تسجيل الخروج
+          {t('layout.logout')}
         </button>
       </form>
     </div>

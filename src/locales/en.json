@@ -257,5 +257,13 @@
     "archive": "Archive",
     "empty": "No messages found.",
     "confirm_delete": "Delete this message?"
+  },
+  "auth": {
+    "login_failed": "Sign-in failed",
+    "sign_in": "Sign in with your Google account to access the admin panel",
+    "google_failed": "Google sign-in failed",
+    "server_error": "Cannot reach the server",
+    "enter_pin": "Enter the code",
+    "enter": "Enter"
   }
 }

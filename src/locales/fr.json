@@ -257,5 +257,13 @@
     "archive": "Archiver",
     "empty": "Aucun message",
     "confirm_delete": "Supprimer ce message ?"
+  },
+  "auth": {
+    "login_failed": "Connexion impossible",
+    "sign_in": "Connectez-vous avec votre compte Google pour accéder au panneau d'administration",
+    "google_failed": "Connexion Google impossible",
+    "server_error": "Serveur injoignable",
+    "enter_pin": "Saisissez le code",
+    "enter": "Entrer"
   }
 }
