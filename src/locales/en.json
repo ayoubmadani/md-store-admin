@@ -244,5 +244,18 @@
     "s_requested": "Pending",
     "s_granted": "Granted",
     "s_revoked": "Revoked"
+  },
+  "msgs": {
+    "title": "Inbox",
+    "count": "You have {{n}} messages",
+    "tab_new": "New",
+    "tab_reading": "Read",
+    "tab_archive": "Archived",
+    "search": "Search by name or subject…",
+    "reply": "Reply",
+    "mark_read": "Mark as read",
+    "archive": "Archive",
+    "empty": "No messages found.",
+    "confirm_delete": "Delete this message?"
   }
 }

@@ -244,5 +244,18 @@
     "s_requested": "En attente",
     "s_granted": "Accepté",
     "s_revoked": "Révoqué"
+  },
+  "msgs": {
+    "title": "Boîte de réception",
+    "count": "Vous avez {{n}} message(s)",
+    "tab_new": "Nouveaux",
+    "tab_reading": "Lus",
+    "tab_archive": "Archivés",
+    "search": "Rechercher par nom ou sujet…",
+    "reply": "Répondre",
+    "mark_read": "Marquer comme lu",
+    "archive": "Archiver",
+    "empty": "Aucun message",
+    "confirm_delete": "Supprimer ce message ?"
   }
 }
