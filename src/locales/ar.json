@@ -136,5 +136,32 @@
     "ship_home": "للمنزل",
     "ship_office": "للمكتب",
     "total_n": "{{n}} طلب"
+  },
+  "users": {
+    "role_ADMIN": "مدير",
+    "role_SUPPORT": "دعم",
+    "role_NORMAL_USER": "تاجر",
+    "verified_yes": "نعم",
+    "verified_no": "لا",
+    "load_failed": "تعذّر تحميل المستخدمين",
+    "unverified_done": "أُلغي التوثيق",
+    "verified_done": "تم التوثيق ✓",
+    "role_changed": "صار الدور: {{role}}",
+    "action_failed": "تعذّرت العملية",
+    "search": "ابحث بالاسم أو البريد…",
+    "total_n": "{{n}} مستخدم",
+    "user": "المستخدم",
+    "role": "الدور",
+    "provider": "طريقة الدخول",
+    "verified": "موثّق",
+    "phone": "الهاتف",
+    "stores": "المتاجر",
+    "joined": "التسجيل",
+    "empty": "لا يوجد مستخدمون",
+    "view": "عرض التفاصيل",
+    "unverify": "إلغاء التوثيق",
+    "verify": "توثيق",
+    "change_role": "تغيير الدور",
+    "stores_n": "{{n}} متجر"
   }
 }

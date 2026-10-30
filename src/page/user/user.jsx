@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useTranslation } from "react-i18next";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
@@ -25,7 +26,7 @@ function Toast({ msg, type, onClose }) {
   useEffect(() => { const t = setTimeout(onClose, 3000); return () => clearTimeout(t); }, [onClose]);
   const colors = { success: "#22c55e", error: "#ef4444", warning: "#f59e0b" };
   return (
-    <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 9999, display: "flex", alignItems: "center", gap: 10, padding: "12px 18px", background: colors[type] ?? colors.warning, color: "#fff", borderRadius: 10, fontSize: 14, fontWeight: 500, boxShadow: "0 8px 24px rgba(0,0,0,.2)", animation: "usr-slideUp .25s ease" }}>
+    <div style={{ position: "fixed", bottom: 90, insetInlineEnd: 16, zIndex: 9999, display: "flex", alignItems: "center", gap: 10, padding: "12px 18px", background: colors[type] ?? colors.warning, color: "#fff", borderRadius: 10, fontSize: 14, fontWeight: 500, boxShadow: "0 8px 24px rgba(0,0,0,.2)", animation: "usr-slideUp .25s ease" }}>
       {msg}
       <button onClick={onClose} style={{ background: "none", border: "none", color: "#fff", cursor: "pointer", opacity: .8, padding: 0 }}><XIcon /></button>
     </div>
@@ -39,17 +40,19 @@ const card = { background: "#fff", border: "1px solid #e2e8f0", borderRadius: 14
 // ─── Role & verified badges ───────────────────────────────────────────────────
 const ROLE_COLORS = { ADMIN: { bg: "#fef3c7", color: "#d97706" }, SUPPORT: { bg: "#e0e7ff", color: "#4338ca" } };
 function RoleBadge({ role }) {
+  const { t } = useTranslation();
   const c = ROLE_COLORS[role] ?? { bg: "#f1f5f9", color: "#64748b" };
   return (
     <span style={{ padding: "3px 10px", borderRadius: 20, fontSize: 11, fontWeight: 700, background: c.bg, color: c.color }}>
-      {role}
+      {t(`users.role_${role}`, { defaultValue: role })}
     </span>
   );
 }
 function VerifiedBadge({ verified }) {
+  const { t } = useTranslation();
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 9px", borderRadius: 20, fontSize: 11, fontWeight: 700, background: verified ? "#dcfce7" : "#f1f5f9", color: verified ? "#16a34a" : "#94a3b8" }}>
-      {verified ? <><CheckIcon /> Yes</> : "No"}
+      {verified ? <><CheckIcon /> {t("users.verified_yes")}</> : t("users.verified_no")}
     </span>
   );
 }
@@ -77,7 +80,7 @@ function Pagination({ page, totalPages, onPage }) {
     <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 6, padding: "16px 0 4px" }}>
       <button onClick={() => onPage(Math.max(1, page - 1))} disabled={page <= 1}
         style={{ padding: "7px 11px", border: "1px solid #e2e8f0", borderRadius: 8, background: "#fff", color: page <= 1 ? "#cbd5e1" : "#475569", cursor: page <= 1 ? "not-allowed" : "pointer" }}>
-        <ChevronIcon dir="left" />
+        <span className="usr-chev"><ChevronIcon dir="left" /></span>
       </button>
       {Array.from({ length: Math.min(7, totalPages) }, (_, i) => {
         const p = Math.max(1, Math.min(totalPages - 6, page - 3)) + i;
@@ -91,18 +94,19 @@ function Pagination({ page, totalPages, onPage }) {
       })}
       <button onClick={() => onPage(Math.min(totalPages, page + 1))} disabled={page >= totalPages}
         style={{ padding: "7px 11px", border: "1px solid #e2e8f0", borderRadius: 8, background: "#fff", color: page >= totalPages ? "#cbd5e1" : "#475569", cursor: page >= totalPages ? "not-allowed" : "pointer" }}>
-        <ChevronIcon dir="right" />
+        <span className="usr-chev"><ChevronIcon dir="right" /></span>
       </button>
     </div>
   );
 }
 
 // ─── Table ────────────────────────────────────────────────────────────────────
-const thStyle = { padding: "10px 16px", textAlign: "left", fontSize: 10, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: ".08em", borderBottom: "1px solid #f1f5f9", whiteSpace: "nowrap" };
+const thStyle = { padding: "10px 16px", textAlign: "start", fontSize: 10, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: ".08em", borderBottom: "1px solid #f1f5f9", whiteSpace: "nowrap" };
 const tdStyle = { padding: "13px 16px", fontSize: 13, borderBottom: "1px solid #f8fafc", verticalAlign: "middle" };
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function Users() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [users, setUsers]       = useState([]);
   const [meta, setMeta]         = useState({ total: 0, totalPages: 1 });
@@ -129,9 +133,9 @@ export default function Users() {
       const res = await api.get(url);
       setUsers(res.data.data ?? []);
       setMeta({ total: res.data.total ?? 0, totalPages: res.data.totalPages ?? 1 });
-    } catch { showToast("Failed to load users", "error"); }
+    } catch { showToast(t("users.load_failed"), "error"); }
     finally { setLoading(false); }
-  }, [page, debouncedQ]);
+  }, [page, debouncedQ, t]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -139,9 +143,9 @@ export default function Users() {
     setActing(id);
     try {
       await api.patch(`/admin/users/${id}/verify`);
-      showToast(current ? "Unverified" : "Verified ✓");
+      showToast(current ? t("users.unverified_done") : t("users.verified_done"));
       load();
-    } catch { showToast("Action failed", "error"); }
+    } catch { showToast(t("users.action_failed"), "error"); }
     setActing(null);
   };
 
@@ -149,9 +153,9 @@ export default function Users() {
     setActing(id);
     try {
       await api.patch(`/admin/users/${id}/role`, { role });
-      showToast(`Role changed to ${role}`);
+      showToast(t("users.role_changed", { role: t(`users.role_${role}`, { defaultValue: role }) }));
       load();
-    } catch { showToast("Action failed", "error"); }
+    } catch { showToast(t("users.action_failed"), "error"); }
     setActing(null);
   };
 
@@ -164,6 +168,10 @@ export default function Users() {
         @keyframes usr-fadeIn  { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
         .usr-row:hover { background: #f8fafc !important; }
         .usr-btn:hover { background: #eff6ff !important; border-color: #93c5fd !important; color: #1d4ed8 !important; }
+        [dir="rtl"] .usr-chev { display:inline-flex; transform:scaleX(-1) }
+        /* الهاتف: بطاقات بدل الجدول */
+        .usr-table { display:none }
+        @media (min-width: 1024px) { .usr-table { display:block } .usr-cards { display:none } }
       `}</style>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 18, animation: "usr-fadeIn .3s ease" }}>
@@ -171,13 +179,13 @@ export default function Users() {
         {/* ── Toolbar ── */}
         <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
           <div style={{ position: "relative", flex: 1, minWidth: 200 }}>
-            <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "#94a3b8", pointerEvents: "none" }}><SearchIcon /></span>
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name or email…"
-              style={{ ...inp, paddingLeft: 36, maxWidth: 360 }} />
+            <span style={{ position: "absolute", insetInlineStart: 10, top: "50%", transform: "translateY(-50%)", color: "#94a3b8", pointerEvents: "none" }}><SearchIcon /></span>
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t("users.search")}
+              style={{ ...inp, paddingInlineStart: 36, maxWidth: 360 }} />
           </div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center", marginLeft: "auto" }}>
-            <div style={{ fontSize: 12, color: "#94a3b8", fontWeight: 600 }}>{meta.total.toLocaleString()} users</div>
-            <button onClick={load} title="Refresh"
+          <div style={{ display: "flex", gap: 8, alignItems: "center", marginInlineStart: "auto" }}>
+            <div style={{ fontSize: 12, color: "#94a3b8", fontWeight: 600 }}>{t("users.total_n", { n: meta.total.toLocaleString() })}</div>
+            <button onClick={load} title={t("common.refresh")}
               style={{ padding: "8px 10px", border: "1px solid #e2e8f0", borderRadius: 8, background: "#fff", color: "#64748b", cursor: "pointer" }}
               onMouseEnter={e => e.currentTarget.style.color = "#2563eb"}
               onMouseLeave={e => e.currentTarget.style.color = "#64748b"}>
@@ -199,25 +207,26 @@ export default function Users() {
               ))}
             </div>
           ) : (
-            <div style={{ overflowX: "auto" }}>
+            <>
+            <div className="usr-table" style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead>
                   <tr style={{ background: "#fafafa" }}>
-                    <th style={thStyle}>User</th>
-                    <th style={thStyle}>Role</th>
-                    <th style={thStyle}>Provider</th>
-                    <th style={thStyle}>Verified</th>
-                    <th style={thStyle}>Phone</th>
-                    <th style={thStyle}>Stores</th>
-                    <th style={thStyle}>Joined</th>
-                    <th style={thStyle}>Actions</th>
+                    <th style={thStyle}>{t("users.user")}</th>
+                    <th style={thStyle}>{t("users.role")}</th>
+                    <th style={thStyle}>{t("users.provider")}</th>
+                    <th style={thStyle}>{t("users.verified")}</th>
+                    <th style={thStyle}>{t("users.phone")}</th>
+                    <th style={thStyle}>{t("users.stores")}</th>
+                    <th style={thStyle}>{t("users.joined")}</th>
+                    <th style={thStyle}>{t("common.actions")}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {users.length === 0 ? (
                     <tr><td colSpan={8} style={{ textAlign: "center", padding: "60px 0", color: "#94a3b8", fontSize: 14 }}>
                       <div style={{ fontSize: 32, marginBottom: 8 }}>👤</div>
-                      No users found
+                      {t("users.empty")}
                     </td></tr>
                   ) : users.map(u => (
                     <tr key={u.id} className="usr-row" style={{ background: "#fff" }}>
@@ -233,18 +242,18 @@ export default function Users() {
                       <td style={tdStyle}><RoleBadge role={u.role} /></td>
                       <td style={tdStyle}><ProviderBadge provider={u.provider} /></td>
                       <td style={tdStyle}><VerifiedBadge verified={u.isVerified} /></td>
-                      <td style={tdStyle}><span style={{ fontSize: 12, color: "#64748b", fontFamily: "monospace" }}>{u.phone ?? "—"}</span></td>
+                      <td style={tdStyle}><bdi dir="ltr" style={{ fontSize: 12, color: "#64748b", fontFamily: "monospace" }}>{u.phone ?? "—"}</bdi></td>
                       <td style={tdStyle}>
                         <span style={{ padding: "3px 10px", borderRadius: 20, fontSize: 11, fontWeight: 700, background: "#eff6ff", color: "#2563eb" }}>
                           {u.stores?.length ?? 0}
                         </span>
                       </td>
-                      <td style={tdStyle}><span style={{ fontSize: 12, color: "#94a3b8", fontFamily: "monospace" }}>{fmtDate(u.createdAt)}</span></td>
+                      <td style={tdStyle}><bdi dir="ltr" style={{ fontSize: 12, color: "#94a3b8", fontFamily: "monospace", whiteSpace: "nowrap" }}>{fmtDate(u.createdAt)}</bdi></td>
                       <td style={tdStyle}>
                         <div style={{ display: "flex", gap: 6 }}>
                           <button
                             onClick={() => navigate(`/users/${u.id}`)}
-                            title="View details"
+                            title={t("users.view")}
                             style={{ padding: "6px 10px", border: "1px solid #e2e8f0", borderRadius: 7, background: "#fff", color: "#64748b", cursor: "pointer", fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", gap: 4, transition: "all .15s" }}
                             onMouseEnter={e => { e.currentTarget.style.background = "#eff6ff"; e.currentTarget.style.color = "#1d4ed8"; }}
                             onMouseLeave={e => { e.currentTarget.style.background = "#fff"; e.currentTarget.style.color = "#64748b"; }}
@@ -254,7 +263,7 @@ export default function Users() {
                           <button
                             disabled={acting === u.id}
                             onClick={() => toggleVerify(u.id, u.isVerified)}
-                            title={u.isVerified ? "Unverify" : "Verify"}
+                            title={u.isVerified ? t("users.unverify") : t("users.verify")}
                             style={{ padding: "6px 10px", border: "1px solid #e2e8f0", borderRadius: 7, background: "#fff", color: "#64748b", cursor: acting === u.id ? "not-allowed" : "pointer", fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", gap: 4, transition: "all .15s" }}
                             onMouseEnter={e => { e.currentTarget.style.background = u.isVerified ? "#fee2e2" : "#dcfce7"; e.currentTarget.style.color = u.isVerified ? "#dc2626" : "#16a34a"; }}
                             onMouseLeave={e => { e.currentTarget.style.background = "#fff"; e.currentTarget.style.color = "#64748b"; }}
@@ -265,12 +274,12 @@ export default function Users() {
                             disabled={acting === u.id}
                             value={u.role}
                             onChange={e => changeRole(u.id, e.target.value)}
-                            title="Change role"
+                            title={t("users.change_role")}
                             style={{ padding: "6px 8px", border: "1px solid #e2e8f0", borderRadius: 7, background: "#fff", color: "#64748b", cursor: acting === u.id ? "not-allowed" : "pointer", fontSize: 11, fontWeight: 600 }}
                           >
-                            <option value="NORMAL_USER">User</option>
-                            <option value="SUPPORT">Support</option>
-                            <option value="ADMIN">Admin</option>
+                            <option value="NORMAL_USER">{t("users.role_NORMAL_USER")}</option>
+                            <option value="SUPPORT">{t("users.role_SUPPORT")}</option>
+                            <option value="ADMIN">{t("users.role_ADMIN")}</option>
                           </select>
                         </div>
                       </td>
@@ -279,6 +288,64 @@ export default function Users() {
                 </tbody>
               </table>
             </div>
+            {/* الهاتف: بطاقة لكل مستخدم */}
+            <div className="usr-cards">
+              {users.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "50px 0", color: "#94a3b8", fontSize: 14 }}>
+                  <div style={{ fontSize: 30, marginBottom: 8 }}>👤</div>{t("users.empty")}
+                </div>
+              ) : users.map(u => (
+                <div key={u.id} style={{ padding: 14, borderBottom: "1px solid #f1f5f9", display: "flex", flexDirection: "column", gap: 10 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <Avatar name={u.username} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, fontSize: 14, color: "#0f172a" }}>{u.username}</div>
+                      <div style={{ fontSize: 11, color: "#94a3b8", fontFamily: "monospace", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}><bdi dir="ltr">{u.email}</bdi></div>
+                    </div>
+                    <bdi dir="ltr" style={{ fontSize: 11, color: "#94a3b8", whiteSpace: "nowrap" }}>{fmtDate(u.createdAt)}</bdi>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                    <RoleBadge role={u.role} />
+                    <VerifiedBadge verified={u.isVerified} />
+                    <ProviderBadge provider={u.provider} />
+                    <span style={{ padding: "3px 10px", borderRadius: 20, fontSize: 11, fontWeight: 700, background: "#eff6ff", color: "#2563eb" }}>{t("users.stores_n", { n: u.stores?.length ?? 0 })}</span>
+                  </div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button
+                      onClick={() => navigate(`/users/${u.id}`)}
+                      title={t("users.view")}
+                      style={{ padding: "6px 10px", border: "1px solid #e2e8f0", borderRadius: 7, background: "#fff", color: "#64748b", cursor: "pointer", fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", gap: 4, transition: "all .15s" }}
+                      onMouseEnter={e => { e.currentTarget.style.background = "#eff6ff"; e.currentTarget.style.color = "#1d4ed8"; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = "#fff"; e.currentTarget.style.color = "#64748b"; }}
+                    >
+                      <EyeIcon />
+                    </button>
+                    <button
+                      disabled={acting === u.id}
+                      onClick={() => toggleVerify(u.id, u.isVerified)}
+                      title={u.isVerified ? t("users.unverify") : t("users.verify")}
+                      style={{ padding: "6px 10px", border: "1px solid #e2e8f0", borderRadius: 7, background: "#fff", color: "#64748b", cursor: acting === u.id ? "not-allowed" : "pointer", fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", gap: 4, transition: "all .15s" }}
+                      onMouseEnter={e => { e.currentTarget.style.background = u.isVerified ? "#fee2e2" : "#dcfce7"; e.currentTarget.style.color = u.isVerified ? "#dc2626" : "#16a34a"; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = "#fff"; e.currentTarget.style.color = "#64748b"; }}
+                    >
+                      {u.isVerified ? <XIcon /> : <CheckIcon />}
+                    </button>
+                    <select
+                      disabled={acting === u.id}
+                      value={u.role}
+                      onChange={e => changeRole(u.id, e.target.value)}
+                      title={t("users.change_role")}
+                      style={{ padding: "6px 8px", border: "1px solid #e2e8f0", borderRadius: 7, background: "#fff", color: "#64748b", cursor: acting === u.id ? "not-allowed" : "pointer", fontSize: 11, fontWeight: 600 }}
+                    >
+                      <option value="NORMAL_USER">{t("users.role_NORMAL_USER")}</option>
+                      <option value="SUPPORT">{t("users.role_SUPPORT")}</option>
+                      <option value="ADMIN">{t("users.role_ADMIN")}</option>
+                    </select>
+                  </div>
+                </div>
+              ))}
+            </div>
+            </>
           )}
           <div style={{ padding: "4px 16px 12px" }}>
             <Pagination page={page} totalPages={meta.totalPages} onPage={setPage} />

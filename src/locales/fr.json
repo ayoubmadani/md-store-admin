@@ -136,5 +136,32 @@
     "ship_home": "À domicile",
     "ship_office": "Au bureau",
     "total_n": "{{n}} commande(s)"
+  },
+  "users": {
+    "role_ADMIN": "Admin",
+    "role_SUPPORT": "Support",
+    "role_NORMAL_USER": "Marchand",
+    "verified_yes": "Oui",
+    "verified_no": "Non",
+    "load_failed": "Échec du chargement des utilisateurs",
+    "unverified_done": "Vérification retirée",
+    "verified_done": "Vérifié ✓",
+    "role_changed": "Rôle : {{role}}",
+    "action_failed": "L'action a échoué",
+    "search": "Rechercher par nom ou e-mail…",
+    "total_n": "{{n}} utilisateur(s)",
+    "user": "Utilisateur",
+    "role": "Rôle",
+    "provider": "Connexion",
+    "verified": "Vérifié",
+    "phone": "Téléphone",
+    "stores": "Boutiques",
+    "joined": "Inscription",
+    "empty": "Aucun utilisateur",
+    "view": "Voir les détails",
+    "unverify": "Retirer la vérification",
+    "verify": "Vérifier",
+    "change_role": "Changer le rôle",
+    "stores_n": "{{n}} boutique(s)"
   }
 }

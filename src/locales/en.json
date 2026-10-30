@@ -136,5 +136,32 @@
     "ship_home": "Home",
     "ship_office": "Office",
     "total_n": "{{n}} order(s)"
+  },
+  "users": {
+    "role_ADMIN": "Admin",
+    "role_SUPPORT": "Support",
+    "role_NORMAL_USER": "Merchant",
+    "verified_yes": "Yes",
+    "verified_no": "No",
+    "load_failed": "Failed to load users",
+    "unverified_done": "Unverified",
+    "verified_done": "Verified ✓",
+    "role_changed": "Role changed to {{role}}",
+    "action_failed": "Action failed",
+    "search": "Search by name or email…",
+    "total_n": "{{n}} users",
+    "user": "User",
+    "role": "Role",
+    "provider": "Sign-in",
+    "verified": "Verified",
+    "phone": "Phone",
+    "stores": "Stores",
+    "joined": "Joined",
+    "empty": "No users found",
+    "view": "View details",
+    "unverify": "Unverify",
+    "verify": "Verify",
+    "change_role": "Change role",
+    "stores_n": "{{n}} stores"
   }
 }
