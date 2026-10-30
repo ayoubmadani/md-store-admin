@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import axios from "axios";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip,
@@ -39,9 +40,9 @@ function Skeleton({ h = 80, style = {} }) {
 }
 
 // ─── Stat Card ────────────────────────────────────────────────────────────────
-function StatCard({ label, value, sub, icon, accent = "#2563eb", bg = "#eff6ff" }) {
+function StatCard({ label, value, unit, sub, icon, accent = "#2563eb", bg = "#eff6ff" }) {
   return (
-    <div style={{ ...card, padding: "18px 20px", display: "flex", alignItems: "flex-start", gap: 14, transition: "box-shadow .2s" }}
+    <div style={{ ...card, padding: "14px", display: "flex", alignItems: "flex-start", gap: 10, transition: "box-shadow .2s" }}
       onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 20px rgba(37,99,235,.08)"}
       onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
       <div style={{ width: 42, height: 42, borderRadius: 10, background: bg, color: accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -49,32 +50,35 @@ function StatCard({ label, value, sub, icon, accent = "#2563eb", bg = "#eff6ff" 
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: ".07em", marginBottom: 4 }}>{label}</div>
-        <div style={{ fontSize: 24, fontWeight: 800, color: "#0f172a", letterSpacing: "-.02em", lineHeight: 1 }}>{value ?? "—"}</div>
+        <div style={{ fontSize: "clamp(16px, 4.4vw, 24px)", fontWeight: 800, color: "#0f172a", letterSpacing: "-.02em", lineHeight: 1.1, display: "flex", flexWrap: "wrap", alignItems: "baseline", columnGap: 4 }}><bdi dir="ltr" style={{ whiteSpace: "nowrap" }}>{value ?? "—"}</bdi>{unit && <span style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8" }}>{unit}</span>}</div>
         {sub && <div style={{ fontSize: 12, color: "#64748b", marginTop: 5 }}>{sub}</div>}
       </div>
     </div>
   );
 }
 
+
+// تلميح الرسم البياني (خارج المكوّن حتى لا يُعاد إنشاؤه في كل رسم)
+const CustomTooltip = ({ active, payload, label }) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div style={{ background: "#0f172a", color: "#fff", padding: "8px 12px", borderRadius: 8, fontSize: 12, fontWeight: 600 }}>
+      <div style={{ color: "#94a3b8", marginBottom: 2 }}>{label}</div>
+      <div>{Number(payload[0].value).toLocaleString("en-DZ")} DZD</div>
+    </div>
+  );
+};
+
 // ─── Revenue Chart ────────────────────────────────────────────────────────────
-function RevenueChart({ data = [] }) {
+function RevenueChart({ data = [], empty }) {
   if (!data.length) return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 150, color: "#cbd5e1", fontSize: 13 }}>
-      No revenue data
+      {empty}
     </div>
   );
   const sliced = data.slice(-30).map(d => ({
     ...d, label: d.date ? d.date.slice(5) : d.date, revenue: Number(d.revenue),
   }));
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (!active || !payload?.length) return null;
-    return (
-      <div style={{ background: "#0f172a", color: "#fff", padding: "8px 12px", borderRadius: 8, fontSize: 12, fontWeight: 600 }}>
-        <div style={{ color: "#94a3b8", marginBottom: 2 }}>{label}</div>
-        <div>{Number(payload[0].value).toLocaleString("en-DZ")} DZD</div>
-      </div>
-    );
-  };
   return (
     <ResponsiveContainer width="100%" height={150}>
       <BarChart data={sliced} margin={{ top: 4, right: 4, left: -20, bottom: 0 }} barCategoryGap="30%">
@@ -99,8 +103,9 @@ const STATUS_COLORS = {
   postponed: { bg: "#f1f5f9", color: "#64748b" },
 };
 function StatusPill({ status }) {
+  const { t } = useTranslation();
   const c = STATUS_COLORS[status] ?? { bg: "#f1f5f9", color: "#64748b" };
-  return <span style={{ padding: "2px 9px", borderRadius: 20, fontSize: 11, fontWeight: 700, background: c.bg, color: c.color }}>{status}</span>;
+  return <span style={{ padding: "2px 9px", borderRadius: 20, fontSize: 11, fontWeight: 700, background: c.bg, color: c.color }}>{t(`status.${status}`, { defaultValue: status })}</span>;
 }
 
 // ─── Section header ───────────────────────────────────────────────────────────
@@ -139,7 +144,7 @@ function RankRow({ rank, label, sub, value, valueSub, accent = "#2563eb", max = 
         </div>
       </div>
       {/* value */}
-      <div style={{ textAlign: "right", flexShrink: 0 }}>
+      <div style={{ textAlign: "end", flexShrink: 0 }}>
         <div style={{ fontSize: 14, fontWeight: 800, color: danger ? "#dc2626" : "#0f172a" }}>{fmt(value)}</div>
         {valueSub && <div style={{ fontSize: 10, color: "#94a3b8" }}>{valueSub}</div>}
       </div>
@@ -148,14 +153,15 @@ function RankRow({ rank, label, sub, value, valueSub, accent = "#2563eb", max = 
 }
 
 // ─── Analytics Panel (card + rank list) ──────────────────────────────────────
-function AnalyticsPanel({ icon, title, subtitle, accent, danger, rows, loading, emptyMsg, renderRow }) {
+function AnalyticsPanel({ icon, title, subtitle, accent, rows, loading, emptyMsg, renderRow }) {
+  const { t } = useTranslation();
   return (
     <div style={{ ...card, padding: 20 }}>
       <SectionHeader icon={icon} title={title} subtitle={subtitle} accent={accent} />
       {loading
         ? Array(5).fill(0).map((_, i) => <Skeleton key={i} h={44} style={{ marginBottom: 8 }} />)
         : rows.length === 0
-          ? <div style={{ textAlign: "center", padding: "30px 0", color: "#94a3b8", fontSize: 13 }}>{emptyMsg ?? "No data"}</div>
+          ? <div style={{ textAlign: "center", padding: "30px 0", color: "#94a3b8", fontSize: 13 }}>{emptyMsg ?? t("dash.no_data")}</div>
           : rows.map((row, i) => renderRow(row, i))}
     </div>
   );
@@ -163,6 +169,7 @@ function AnalyticsPanel({ icon, title, subtitle, accent, danger, rows, loading, 
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function Dashboard() {
+  const { t } = useTranslation();
   const [stats,           setStats]           = useState(null);
   const [revenue,         setRevenue]         = useState([]);
   const [topPhones,       setTopPhones]       = useState([]);
@@ -212,12 +219,12 @@ export default function Dashboard() {
 
   const s = stats;
   const statCards = s ? [
-    { label: "Total Users",   value: fmt(s.users?.total),            sub: `+${fmt(s.users?.newThisMonth)} this month`,       icon: <UsersIcon />,  accent: "#7c3aed", bg: "#f5f3ff" },
-    { label: "Active Stores", value: fmt(s.stores?.active),          sub: `${fmt(s.stores?.total)} total`,                   icon: <StoreIcon />,  accent: "#2563eb", bg: "#eff6ff" },
-    { label: "Total Orders",  value: fmt(s.orders?.total),           sub: `${fmt(s.orders?.byStatus?.pending)} pending`,     icon: <BoxIcon />,    accent: "#d97706", bg: "#fffbeb" },
-    { label: "Revenue",       value: `${fmt(s.orders?.totalRevenue)} DZD`, sub: `${fmt(s.orders?.revenueThisMonth)} this month`, icon: <DollarIcon />, accent: "#16a34a", bg: "#f0fdf4" },
-    { label: "Products",      value: fmt(s.products?.total),         sub: `${fmt(s.products?.outOfStock)} out of stock`,     icon: <TagIcon />,    accent: "#db2777", bg: "#fdf2f8" },
-    { label: "Themes",        value: fmt(s.themes?.total),           sub: `${fmt(s.themes?.totalPurchases)} purchases`,      icon: <PaletteIcon />,accent: "#0891b2", bg: "#ecfeff" },
+    { label: t("dash.total_users"),   value: fmt(s.users?.total),            sub: t("dash.this_month", { n: fmt(s.users?.newThisMonth) }),       icon: <UsersIcon />,  accent: "#7c3aed", bg: "#f5f3ff" },
+    { label: t("dash.active_stores"), value: fmt(s.stores?.active),          sub: t("dash.total_n", { n: fmt(s.stores?.total) }),                   icon: <StoreIcon />,  accent: "#2563eb", bg: "#eff6ff" },
+    { label: t("dash.total_orders"),  value: fmt(s.orders?.total),           sub: t("dash.pending_n", { n: fmt(s.orders?.byStatus?.pending) }),     icon: <BoxIcon />,    accent: "#d97706", bg: "#fffbeb" },
+    { label: t("dash.revenue"),       value: fmt(s.orders?.totalRevenue), unit: "DZD", sub: t("dash.this_month", { n: fmt(s.orders?.revenueThisMonth) }), icon: <DollarIcon />, accent: "#16a34a", bg: "#f0fdf4" },
+    { label: t("dash.products"),      value: fmt(s.products?.total),         sub: t("dash.out_of_stock_n", { n: fmt(s.products?.outOfStock) }),     icon: <TagIcon />,    accent: "#db2777", bg: "#fdf2f8" },
+    { label: t("dash.themes"),        value: fmt(s.themes?.total),           sub: t("dash.purchases_n", { n: fmt(s.themes?.totalPurchases) }),      icon: <PaletteIcon />,accent: "#0891b2", bg: "#ecfeff" },
   ] : [];
 
   const pendingOrders = s
@@ -237,12 +244,16 @@ export default function Dashboard() {
       <style>{`
         @keyframes db-pulse  { 0%,100%{opacity:1} 50%{opacity:.5} }
         @keyframes db-fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+        .db-2, .db-rev { display:grid; grid-template-columns:1fr; gap:14px }
+        .db-stats { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px }
+        @media (min-width: 640px) { .db-stats { grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:14px } }
+        @media (min-width: 900px) { .db-2 { grid-template-columns:1fr 1fr } .db-rev { grid-template-columns:1fr 320px } }
       `}</style>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 22, animation: "db-fadeIn .3s ease" }}>
 
         {/* ── Stats ── */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))", gap: 14 }}>
+        <div className="db-stats">
           {loadingMain
             ? Array(6).fill(0).map((_, i) => <Skeleton key={i} h={90} />)
             : statCards.map(c => <StatCard key={c.label} {...c} />)
@@ -250,23 +261,23 @@ export default function Dashboard() {
         </div>
 
         {/* ── Revenue + status ── */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 14 }}>
+        <div className="db-rev">
           <div style={{ ...card, padding: 20 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
               <div>
-                <div style={{ fontWeight: 700, fontSize: 15, color: "#0f172a" }}>Revenue (last 30 days)</div>
-                <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 2 }}>Daily DZD income</div>
+                <div style={{ fontWeight: 700, fontSize: 15, color: "#0f172a" }}>{t("dash.revenue_30")}</div>
+                <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 2 }}>{t("dash.revenue_daily")}</div>
               </div>
               <div style={{ color: "#94a3b8" }}><TrendIcon /></div>
             </div>
-            {loadingMain ? <Skeleton h={150} /> : <RevenueChart data={revenue} />}
+            {loadingMain ? <Skeleton h={150} /> : <RevenueChart data={revenue} empty={t("dash.no_revenue")} />}
           </div>
           <div style={{ ...card, padding: 20 }}>
-            <SectionHeader icon={<BoxIcon />} title="Orders by Status" accent="#d97706" />
+            <SectionHeader icon={<BoxIcon />} title={t("dash.orders_by_status")} accent="#d97706" />
             {loadingMain
               ? Array(5).fill(0).map((_, i) => <Skeleton key={i} h={26} style={{ marginBottom: 8 }} />)
               : pendingOrders.length === 0
-                ? <div style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", padding: "24px 0" }}>No orders yet</div>
+                ? <div style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", padding: "24px 0" }}>{t("dash.no_orders")}</div>
                 : pendingOrders.map(([status, count]) => {
                   const total = s.orders?.total || 1;
                   const c = STATUS_COLORS[status] ?? { color: "#64748b" };
@@ -290,31 +301,31 @@ export default function Dashboard() {
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 0" }}>
           <div style={{ flex: 1, height: 1, background: "#e2e8f0" }} />
           <span style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: ".1em", whiteSpace: "nowrap" }}>
-            Analytics — Top 10
+            {t("dash.analytics")}
           </span>
           <div style={{ flex: 1, height: 1, background: "#e2e8f0" }} />
         </div>
 
         {/* ── Row 1: returned phones + top wilayas ── */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+        <div className="db-2">
 
           {/* الأرقام الأكثر إرجاعاً */}
           <AnalyticsPanel
             icon={<PhoneIcon />}
-            title="الأرقام الأكثر إرجاعاً"
-            subtitle="Top 10 phone numbers — most returns"
+            title={t("dash.top_ret_phones")}
+            subtitle={t("dash.top_ret_phones_sub")}
             accent="#dc2626"
             danger
             rows={topPhones}
             loading={loadingAnalytics}
-            emptyMsg="No returned orders"
+            emptyMsg={t("dash.no_returns")}
             renderRow={(r, i) => (
               <RankRow key={r.phone}
                 rank={i + 1}
                 label={r.phone}
                 sub={r.name}
                 value={r.total}
-                valueSub="returns"
+                valueSub={t("dash.returns")}
                 accent="#dc2626"
                 danger
                 max={maxPhone}
@@ -325,8 +336,8 @@ export default function Dashboard() {
           {/* الولايات الأكثر طلباً بدون إرجاع */}
           <AnalyticsPanel
             icon={<MapPinIcon />}
-            title="الولايات الأكثر طلباً"
-            subtitle="Top 10 wilayas — excluding returns & cancellations"
+            title={t("dash.top_wilayas")}
+            subtitle={t("dash.top_wilayas_sub")}
             accent="#16a34a"
             rows={topWilayas}
             loading={loadingAnalytics}
@@ -336,7 +347,7 @@ export default function Dashboard() {
                 label={r.wilaya}
                 sub={`${fmt(r.revenue)} DZD`}
                 value={r.total}
-                valueSub="orders"
+                valueSub={t("dash.orders")}
                 accent="#16a34a"
                 max={maxWilaya}
               />
@@ -345,24 +356,24 @@ export default function Dashboard() {
         </div>
 
         {/* ── Row 2: returned wilayas + top products ── */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+        <div className="db-2">
 
           {/* الولايات الأكثر إرجاعاً */}
           <AnalyticsPanel
             icon={<MapPinIcon />}
-            title="الولايات الأكثر إرجاعاً"
-            subtitle="Top 10 wilayas — most returned orders"
+            title={t("dash.top_ret_wilayas")}
+            subtitle={t("dash.top_ret_wilayas_sub")}
             accent="#ef4444"
             danger
             rows={topRetWilayas}
             loading={loadingAnalytics}
-            emptyMsg="No returns recorded"
+            emptyMsg={t("dash.no_returns")}
             renderRow={(r, i) => (
               <RankRow key={r.wilaya}
                 rank={i + 1}
                 label={r.wilaya}
                 value={r.total}
-                valueSub="returns"
+                valueSub={t("dash.returns")}
                 accent="#ef4444"
                 danger
                 max={maxRetW}
@@ -373,8 +384,8 @@ export default function Dashboard() {
           {/* المنتجات الأكثر طلباً */}
           <AnalyticsPanel
             icon={<PackageIcon />}
-            title="المنتجات الأكثر طلباً"
-            subtitle="Top 10 most ordered products"
+            title={t("dash.top_products")}
+            subtitle={t("dash.top_products_sub")}
             accent="#7c3aed"
             rows={topProducts}
             loading={loadingAnalytics}
@@ -382,9 +393,9 @@ export default function Dashboard() {
               <RankRow key={r.productId}
                 rank={i + 1}
                 label={r.name}
-                sub={`${fmt(r.revenue)} DZD revenue`}
+                sub={t("dash.revenue_amount", { n: fmt(r.revenue) })}
                 value={r.totalOrders}
-                valueSub={`${fmt(r.totalQty)} units`}
+                valueSub={t("dash.units_n", { n: fmt(r.totalQty) })}
                 accent="#7c3aed"
                 max={maxProduct}
               />
@@ -393,13 +404,13 @@ export default function Dashboard() {
         </div>
 
         {/* ── Row 3: top categories + top stores ── */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+        <div className="db-2">
 
           {/* الأصناف الأكثر طلباً */}
           <AnalyticsPanel
             icon={<GridIcon />}
-            title="الأصناف الأكثر طلباً"
-            subtitle="Top 10 categories by order volume"
+            title={t("dash.top_categories")}
+            subtitle={t("dash.top_categories_sub")}
             accent="#0891b2"
             rows={topCategories}
             loading={loadingAnalytics}
@@ -409,7 +420,7 @@ export default function Dashboard() {
                 label={r.name}
                 sub={`${fmt(r.revenue)} DZD`}
                 value={r.totalOrders}
-                valueSub="orders"
+                valueSub={t("dash.orders")}
                 accent="#0891b2"
                 max={maxCat}
               />
@@ -419,8 +430,8 @@ export default function Dashboard() {
           {/* المتاجر الأكثر طلباً */}
           <AnalyticsPanel
             icon={<ShopIcon />}
-            title="المتاجر الأكثر طلباً"
-            subtitle="Top 10 stores by order volume"
+            title={t("dash.top_stores")}
+            subtitle={t("dash.top_stores_sub")}
             accent="#d97706"
             rows={topStores}
             loading={loadingAnalytics}
@@ -430,7 +441,7 @@ export default function Dashboard() {
                 label={r.name}
                 sub={`${r.subdomain} · ${fmt(r.revenue)} DZD`}
                 value={r.totalOrders}
-                valueSub="orders"
+                valueSub={t("dash.orders")}
                 accent="#d97706"
                 max={maxStore}
               />
@@ -440,14 +451,14 @@ export default function Dashboard() {
 
         {/* ── User + Health summary ── */}
         {!loadingMain && s && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+          <div className="db-2">
             <div style={{ ...card, padding: 20 }}>
-              <SectionHeader icon={<UsersIcon />} title="User Summary" accent="#7c3aed" />
+              <SectionHeader icon={<UsersIcon />} title={t("dash.user_summary")} accent="#7c3aed" />
               {[
-                { label: "Total Users",    value: fmt(s.users?.total),        color: "#7c3aed" },
-                { label: "Verified",       value: fmt(s.users?.verified),     color: "#16a34a" },
-                { label: "Admins",         value: fmt(s.users?.admins),       color: "#d97706" },
-                { label: "New This Month", value: fmt(s.users?.newThisMonth), color: "#2563eb" },
+                { label: t("dash.total_users"),    value: fmt(s.users?.total),        color: "#7c3aed" },
+                { label: t("dash.verified"),       value: fmt(s.users?.verified),     color: "#16a34a" },
+                { label: t("dash.admins"),         value: fmt(s.users?.admins),       color: "#d97706" },
+                { label: t("dash.new_this_month"), value: fmt(s.users?.newThisMonth), color: "#2563eb" },
               ].map(row => (
                 <div key={row.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 0", borderBottom: "1px solid #f8fafc" }}>
                   <span style={{ fontSize: 13, color: "#475569" }}>{row.label}</span>
@@ -456,13 +467,13 @@ export default function Dashboard() {
               ))}
             </div>
             <div style={{ ...card, padding: 20 }}>
-              <SectionHeader icon={<TagIcon />} title="Product & Store Health" accent="#db2777" />
+              <SectionHeader icon={<TagIcon />} title={t("dash.health")} accent="#db2777" />
               {[
-                { label: "Total Products",  value: fmt(s.products?.total),      color: "#0f172a" },
-                { label: "Active Products", value: fmt(s.products?.active),     color: "#16a34a" },
-                { label: "Out of Stock",    value: fmt(s.products?.outOfStock), color: s.products?.outOfStock > 0 ? "#dc2626" : "#16a34a" },
-                { label: "Total Stores",    value: fmt(s.stores?.total),        color: "#0f172a" },
-                { label: "Inactive Stores", value: fmt(s.stores?.inactive),     color: s.stores?.inactive > 0 ? "#d97706" : "#16a34a" },
+                { label: t("dash.total_products"),  value: fmt(s.products?.total),      color: "#0f172a" },
+                { label: t("dash.active_products"), value: fmt(s.products?.active),     color: "#16a34a" },
+                { label: t("dash.out_of_stock"),    value: fmt(s.products?.outOfStock), color: s.products?.outOfStock > 0 ? "#dc2626" : "#16a34a" },
+                { label: t("dash.total_stores"),    value: fmt(s.stores?.total),        color: "#0f172a" },
+                { label: t("dash.inactive_stores"), value: fmt(s.stores?.inactive),     color: s.stores?.inactive > 0 ? "#d97706" : "#16a34a" },
               ].map(row => (
                 <div key={row.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 0", borderBottom: "1px solid #f8fafc" }}>
                   <span style={{ fontSize: 13, color: "#475569" }}>{row.label}</span>
@@ -471,7 +482,7 @@ export default function Dashboard() {
               ))}
               {s.products?.outOfStock > 0 && (
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, padding: "10px 12px", background: "#fef3c7", borderRadius: 8, color: "#d97706", fontSize: 12, fontWeight: 600 }}>
-                  <AlertIcon /> {fmt(s.products.outOfStock)} products need restocking
+                  <AlertIcon /> {t("dash.restock", { n: fmt(s.products.outOfStock) })}
                 </div>
               )}
             </div>
