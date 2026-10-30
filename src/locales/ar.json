@@ -194,5 +194,28 @@
     "deactivate": "إيقاف",
     "activate": "تفعيل",
     "delete": "حذف المتجر"
+  },
+  "products": {
+    "price": "السعر",
+    "original": "السعر الأصلي",
+    "stock": "المخزون",
+    "store": "المتجر",
+    "category": "التصنيف",
+    "attributes": "الخصائص",
+    "offers": "العروض",
+    "load_failed": "تعذّر تحميل المنتجات",
+    "deactivated": "أُوقف المنتج",
+    "activated": "فُعّل المنتج",
+    "confirm_soft": "حذف «{{name}}» (قابل للاستعادة)؟",
+    "soft_deleted": "حُذف المنتج (قابل للاستعادة)",
+    "confirm_hard": "حذف «{{name}}» نهائياً؟ لا يمكن التراجع.",
+    "hard_deleted": "حُذف المنتج نهائياً",
+    "total_n": "{{n}} منتج",
+    "product": "المنتج",
+    "empty": "لا توجد منتجات",
+    "out": "نافد",
+    "stock_n": "المخزون: {{n}}",
+    "soft_delete": "حذف (قابل للاستعادة)",
+    "hard_delete": "حذف نهائي"
   }
 }

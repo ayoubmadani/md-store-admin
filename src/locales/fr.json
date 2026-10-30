@@ -194,5 +194,28 @@
     "deactivate": "Désactiver",
     "activate": "Activer",
     "delete": "Supprimer la boutique"
+  },
+  "products": {
+    "price": "Prix",
+    "original": "Prix barré",
+    "stock": "Stock",
+    "store": "Boutique",
+    "category": "Catégorie",
+    "attributes": "Attributs",
+    "offers": "Offres",
+    "load_failed": "Échec du chargement des produits",
+    "deactivated": "Produit désactivé",
+    "activated": "Produit activé",
+    "confirm_soft": "Supprimer « {{name}} » (récupérable) ?",
+    "soft_deleted": "Produit supprimé (récupérable)",
+    "confirm_hard": "Supprimer « {{name}} » définitivement ? Action irréversible.",
+    "hard_deleted": "Produit supprimé définitivement",
+    "total_n": "{{n}} produit(s)",
+    "product": "Produit",
+    "empty": "Aucun produit",
+    "out": "Rupture",
+    "stock_n": "Stock : {{n}}",
+    "soft_delete": "Supprimer (récupérable)",
+    "hard_delete": "Suppression définitive"
   }
 }

@@ -194,5 +194,28 @@
     "deactivate": "Deactivate",
     "activate": "Activate",
     "delete": "Delete store"
+  },
+  "products": {
+    "price": "Price",
+    "original": "Original",
+    "stock": "Stock",
+    "store": "Store",
+    "category": "Category",
+    "attributes": "Attributes",
+    "offers": "Offers",
+    "load_failed": "Failed to load products",
+    "deactivated": "Product deactivated",
+    "activated": "Product activated",
+    "confirm_soft": "Delete \"{{name}}\" (recoverable)?",
+    "soft_deleted": "Product deleted (recoverable)",
+    "confirm_hard": "PERMANENTLY delete \"{{name}}\"? This cannot be undone.",
+    "hard_deleted": "Product permanently deleted",
+    "total_n": "{{n}} products",
+    "product": "Product",
+    "empty": "No products found",
+    "out": "Out",
+    "stock_n": "Stock: {{n}}",
+    "soft_delete": "Soft delete",
+    "hard_delete": "Permanent delete"
   }
 }
