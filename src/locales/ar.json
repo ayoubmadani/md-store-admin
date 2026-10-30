@@ -1,0 +1,27 @@
+{
+  "nav": {
+    "dashboard": "الرئيسية",
+    "themes": "الثيمات",
+    "custom_themes": "ثيمات مخصصة",
+    "users": "المستخدمون",
+    "stores": "المتاجر",
+    "orders": "الطلبات",
+    "confirmation": "التأكيد",
+    "locations": "المواقع",
+    "products": "المنتجات",
+    "niches": "المجالات",
+    "plan": "الخطط",
+    "coupons": "الكوبونات",
+    "messages": "الرسائل",
+    "images": "الصور",
+    "settings": "الإعدادات"
+  },
+  "layout": {
+    "admin_panel": "لوحة الإدارة",
+    "logout": "تسجيل الخروج",
+    "more": "المزيد",
+    "menu": "القائمة",
+    "close": "إغلاق",
+    "language": "اللغة"
+  }
+}

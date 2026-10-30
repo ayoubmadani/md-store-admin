@@ -1,4 +1,5 @@
-import React from 'react'
+import React, { useEffect } from 'react'
+import { hideSplash } from './lib/splash'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { GoogleOAuthProvider } from '@react-oauth/google'
 import { AuthProvider } from './context/AuthContext'
@@ -24,6 +25,8 @@ import ConfirmationAdmin from './page/confirmation/confirmation'
 import LocationsAdmin from './page/locations/locations'
 
 export default function App() {
+  // شاشة البداية تغطي تحميل الكود فقط — الجلسة تُقرأ مباشرة من التخزين
+  useEffect(() => { hideSplash(); }, []);
   return (
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
       <AuthProvider>

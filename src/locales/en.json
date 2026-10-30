@@ -1,0 +1,27 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "themes": "Themes",
+    "custom_themes": "Custom themes",
+    "users": "Users",
+    "stores": "Stores",
+    "orders": "Orders",
+    "confirmation": "Confirmation",
+    "locations": "Locations",
+    "products": "Products",
+    "niches": "Niches",
+    "plan": "Plans",
+    "coupons": "Coupons",
+    "messages": "Messages",
+    "images": "Images",
+    "settings": "Settings"
+  },
+  "layout": {
+    "admin_panel": "Admin panel",
+    "logout": "Log out",
+    "more": "More",
+    "menu": "Menu",
+    "close": "Close",
+    "language": "Language"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "themes": "Thèmes",
+    "custom_themes": "Thèmes personnalisés",
+    "users": "Utilisateurs",
+    "stores": "Boutiques",
+    "orders": "Commandes",
+    "confirmation": "Confirmation",
+    "locations": "Localités",
+    "products": "Produits",
+    "niches": "Niches",
+    "plan": "Offres",
+    "coupons": "Coupons",
+    "messages": "Messages",
+    "images": "Images",
+    "settings": "Paramètres"
+  },
+  "layout": {
+    "admin_panel": "Panneau d'administration",
+    "logout": "Se déconnecter",
+    "more": "Plus",
+    "menu": "Menu",
+    "close": "Fermer",
+    "language": "Langue"
+  }
+}
