@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 import { Loader2, PhoneCall, Save } from 'lucide-react';
 import McpKeys from './McpKeys';
 import CustomThemeSettings from './CustomThemeSettings';
@@ -14,6 +15,7 @@ const api = axios.create({
 // Platform settings — confirmation fee charged to the confirmation company per confirmed order,
 // and the admin MCP keys.
 export default function Setting() {
+  const { t } = useTranslation();
   const [fee, setFee] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -22,7 +24,7 @@ export default function Setting() {
   useEffect(() => {
     api.get('/admin/settings')
       .then(({ data }) => setFee(String(data.confirmationFee ?? '')))
-      .catch(() => setMessage({ type: 'error', text: 'Could not load settings' }))
+      .catch(() => setMessage({ type: 'error', text: t('settings.load_failed') }))
       .finally(() => setLoading(false));
   }, []);
 
@@ -33,10 +35,10 @@ export default function Setting() {
     try {
       const { data } = await api.put('/admin/settings', { confirmationFee: Number(fee) });
       setFee(String(data.confirmationFee));
-      setMessage({ type: 'success', text: 'Saved' });
+      setMessage({ type: 'success', text: t('settings.saved') });
     } catch (err) {
       const msg = err.response?.data?.message;
-      setMessage({ type: 'error', text: (Array.isArray(msg) ? msg[0] : msg) || 'Could not save' });
+      setMessage({ type: 'error', text: (Array.isArray(msg) ? msg[0] : msg) || t('settings.save_failed') });
     } finally {
       setSaving(false);
     }
@@ -45,8 +47,8 @@ export default function Setting() {
   return (
     <div className="space-y-6 max-w-3xl">
       <div>
-        <h1 className="text-xl font-black text-gray-900">Settings</h1>
-        <p className="text-sm text-gray-400 mt-0.5">Platform-wide settings and admin access for Claude</p>
+        <h1 className="text-xl font-black text-gray-900">{t('settings.title')}</h1>
+        <p className="text-sm text-gray-400 mt-0.5">{t('settings.subtitle')}</p>
       </div>
 
       {/* Confirmation fee */}
@@ -56,10 +58,9 @@ export default function Setting() {
             <PhoneCall size={17} />
           </div>
           <div>
-            <p className="font-bold text-gray-900 text-[15px]">Confirmation fee</p>
+            <p className="font-bold text-gray-900 text-[15px]">{t('settings.fee_title')}</p>
             <p className="text-sm text-gray-400 mt-0.5">
-              Charged once per confirmed order to the confirmation company's wallet. The company's own fee is agreed with
-              the merchant outside the platform. 0 = no fee.
+              {t('settings.fee_desc')}
             </p>
           </div>
         </div>
@@ -69,7 +70,7 @@ export default function Setting() {
         ) : (
           <form onSubmit={save} className="flex flex-wrap items-end gap-3">
             <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wide">Amount per confirmed order (DZD)</label>
+              <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wide">{t('settings.fee_amount')}</label>
               <input
                 type="number" min="0" max="10000" step="0.5" required
                 value={fee}
@@ -82,7 +83,7 @@ export default function Setting() {
               disabled={saving}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50"
             >
-              {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />} Save
+              {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />} {t('common.save')}
             </button>
             {message && (
               <span className={`text-sm font-semibold ${message.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>
