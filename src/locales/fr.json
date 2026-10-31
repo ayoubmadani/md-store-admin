@@ -14,7 +14,8 @@
     "coupons": "Coupons",
     "messages": "Messages",
     "images": "Images",
-    "settings": "Paramètres"
+    "settings": "Paramètres",
+    "mail": "E-mails"
   },
   "layout": {
     "admin_panel": "Panneau d'administration",
@@ -346,5 +347,30 @@
     "mcp_revoke_failed": "Impossible de révoquer la clé",
     "mcp_create_failed": "Impossible de créer la clé",
     "mcp_confirm_revoke": "Révoquer « {{name}} » ? Claude perdra l'accès admin avec cette clé."
+  },
+  "mail": {
+    "title": "E-mails",
+    "subtitle": "Boîtes mail : lire la réception et répondre",
+    "add": "Ajouter une boîte",
+    "password": "Mot de passe de la boîte",
+    "servers_hint": "Les serveurs Hostinger sont remplis pour les adresses mdstore.top (et Gmail, Outlook). Le mot de passe est chiffré.",
+    "advanced": "Autres serveurs (facultatif)",
+    "checking": "Vérification de la connexion…",
+    "add_failed": "Impossible d'ajouter la boîte",
+    "load_failed": "Impossible de charger les e-mails",
+    "empty_boxes": "Aucune boîte mail ajoutée pour l'instant",
+    "empty": "Aucun message",
+    "search": "Rechercher par expéditeur ou objet",
+    "more": "Charger plus",
+    "pick": "Choisissez un message à lire",
+    "no_subject": "(sans objet)",
+    "to": "À",
+    "reply_ph": "Votre réponse à {{to}}…",
+    "send": "Envoyer la réponse",
+    "sent": "Réponse envoyée",
+    "send_failed": "Impossible d'envoyer la réponse",
+    "remove": "Retirer la boîte du panneau",
+    "remove_confirm": "Retirer {{email}} du panneau ? La boîte et ses messages ne sont pas supprimés.",
+    "box_error": "Connexion impossible à cette boîte"
   }
 }

@@ -23,6 +23,7 @@ import CategoryNiche from './page/category-niche/category-niche'
 import ImageAdminPage from './page/image/image'
 import ConfirmationAdmin from './page/confirmation/confirmation'
 import LocationsAdmin from './page/locations/locations'
+import MailboxPage from './page/mailbox/mailbox'
 
 export default function App() {
   // شاشة البداية تغطي تحميل الكود فقط — الجلسة تُقرأ مباشرة من التخزين
@@ -53,6 +54,7 @@ export default function App() {
                 <Route path='images' element={<ImageAdminPage />} />
                 <Route path='confirmation' element={<ConfirmationAdmin />} />
                 <Route path='locations' element={<LocationsAdmin />} />
+                <Route path='mail' element={<MailboxPage />} />
               </Route>
             </Route>
           </Routes>

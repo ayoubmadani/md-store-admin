@@ -14,7 +14,8 @@
     "coupons": "Coupons",
     "messages": "Messages",
     "images": "Images",
-    "settings": "Settings"
+    "settings": "Settings",
+    "mail": "Email"
   },
   "layout": {
     "admin_panel": "Admin panel",
@@ -346,5 +347,30 @@
     "mcp_revoke_failed": "Could not revoke key",
     "mcp_create_failed": "Could not create key",
     "mcp_confirm_revoke": "Revoke \"{{name}}\"? Claude will lose admin access with this key."
+  },
+  "mail": {
+    "title": "Email",
+    "subtitle": "Mailboxes: read the inbox and reply",
+    "add": "Add mailbox",
+    "password": "Mailbox password",
+    "servers_hint": "Hostinger servers are filled in for mdstore.top addresses (and Gmail, Outlook). The password is stored encrypted.",
+    "advanced": "Other servers (optional)",
+    "checking": "Checking the login…",
+    "add_failed": "Could not add the mailbox",
+    "load_failed": "Could not load email",
+    "empty_boxes": "No mailbox added yet",
+    "empty": "No messages",
+    "search": "Search sender or subject",
+    "more": "Load more",
+    "pick": "Pick a message to read",
+    "no_subject": "(no subject)",
+    "to": "To",
+    "reply_ph": "Your reply to {{to}}…",
+    "send": "Send reply",
+    "sent": "Reply sent",
+    "send_failed": "Could not send the reply",
+    "remove": "Remove mailbox from the panel",
+    "remove_confirm": "Remove {{email}} from the panel? The mailbox and its messages are not deleted.",
+    "box_error": "Cannot connect to this mailbox"
   }
 }
