@@ -6,6 +6,7 @@ import McpKeys from './McpKeys';
 import CustomThemeSettings from './CustomThemeSettings';
 import BinanceSettings from './BinanceSettings';
 import AliexpressSettings from './AliexpressSettings';
+import WelcomeEmailSettings from './WelcomeEmailSettings';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
@@ -93,6 +94,8 @@ export default function Setting() {
           </form>
         )}
       </section>
+
+      <WelcomeEmailSettings />
 
       <AliexpressSettings />
 

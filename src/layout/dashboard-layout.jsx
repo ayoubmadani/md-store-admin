@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { BarChart3, Globe2, Image, Layers, LogOut, Mail, Menu, Package, Palette, Percent, PhoneCall, Settings, ShoppingCart, Sparkles, Store, Users, X, Crown, Inbox } from 'lucide-react';
+import { BarChart3, Globe2, Image, Layers, LogOut, Mail, Menu, Package, Palette, Percent, PhoneCall, Settings, ShoppingCart, Sparkles, Store, Users, X, Crown, Inbox, Megaphone } from 'lucide-react';
 import { useAuth } from '../context/useAuth';
 import { LANGS } from '../i18n';
 
@@ -21,6 +21,7 @@ const MENU = [
   { key: 'locations', path: '/locations', icon: Globe2 },
   { key: 'messages', path: '/message', icon: Mail },
   { key: 'mail', path: '/mail', icon: Inbox },
+  { key: 'campaigns', path: '/campaigns', icon: Megaphone },
   { key: 'images', path: '/images', icon: Image },
   { key: 'settings', path: '/settings', icon: Settings },
 ];

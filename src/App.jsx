@@ -24,6 +24,7 @@ import ImageAdminPage from './page/image/image'
 import ConfirmationAdmin from './page/confirmation/confirmation'
 import LocationsAdmin from './page/locations/locations'
 import MailboxPage from './page/mailbox/mailbox'
+import CampaignsPage from './page/campaigns/campaigns'
 
 export default function App() {
   // شاشة البداية تغطي تحميل الكود فقط — الجلسة تُقرأ مباشرة من التخزين
@@ -55,6 +56,7 @@ export default function App() {
                 <Route path='confirmation' element={<ConfirmationAdmin />} />
                 <Route path='locations' element={<LocationsAdmin />} />
                 <Route path='mail' element={<MailboxPage />} />
+                <Route path='campaigns' element={<CampaignsPage />} />
               </Route>
             </Route>
           </Routes>
