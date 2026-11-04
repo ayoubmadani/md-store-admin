@@ -55,7 +55,7 @@ function CountryForm({ initial, onSave, onClose }) {
       const body = { ...c, code: c.code.toUpperCase(), currency: c.currency.toUpperCase() };
       if (!body.fr_name) delete body.fr_name;
       if (!body.phone_pattern) delete body.phone_pattern;
-      body.divisions = (body.divisions || []).filter((d) => d.ar?.trim()).map(({ code, ar, fr, en }) => ({ code: code || "", ar, ...(fr ? { fr } : {}), ...(en ? { en } : {}) }));
+      body.divisions = (body.divisions || []).filter((d) => d.ar?.trim()).map(({ code, ar, fr, en, active }) => ({ code: code || "", ar, ...(fr ? { fr } : {}), ...(en ? { en } : {}), ...(code && active === false ? { active: false } : {}) }));
       if (!body.divisions.length) delete body.divisions;
       await onSave(body);
       onClose();
@@ -74,12 +74,18 @@ function CountryForm({ initial, onSave, onClose }) {
         <div style={{ gridColumn: "1 / -1", marginBottom: 10 }}>
           <span style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#475569", marginBottom: 4 }}>Divisions (optional — e.g. Algeria 58 / 69 wilayas). Code empty = base list</span>
           {(c.divisions || []).map((d, i) => (
-            <div key={i} style={{ display: "grid", gridTemplateColumns: "70px 1fr 1fr 1fr 32px", gap: 6, marginBottom: 6 }}>
-              <input style={{ ...input, fontFamily: "monospace" }} value={d.code} maxLength={8} placeholder="69" onChange={(e) => set("divisions", c.divisions.map((x, j) => (j === i ? { ...x, code: e.target.value.trim() } : x)))} />
+            <div key={i} style={{ display: "grid", gridTemplateColumns: "70px 1fr 1fr 1fr 74px 32px", gap: 6, marginBottom: 6, alignItems: "center" }}>
+              <input style={{ ...input, fontFamily: "monospace" }} value={d.code} maxLength={8} placeholder="—" onChange={(e) => set("divisions", c.divisions.map((x, j) => (j === i ? { ...x, code: e.target.value.trim() } : x)))} />
               {["ar", "fr", "en"].map((lang) => (
                 <input key={lang} style={{ ...input, direction: lang === "ar" ? "rtl" : "ltr" }} value={d[lang] || ""} placeholder={`${lang === "ar" ? "69 ولاية" : lang === "fr" ? "69 wilayas" : "69 provinces"}`}
                   onChange={(e) => set("divisions", c.divisions.map((x, j) => (j === i ? { ...x, [lang]: e.target.value } : x)))} />
               ))}
+              {/* موقوف = يختفي من اختيار التجار (الأساسي، Code فارغ، لا يُوقف) */}
+              <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 700, color: d.code && d.active === false ? "#b45309" : "#16a34a" }}>
+                <input type="checkbox" disabled={!d.code} checked={!d.code || d.active !== false}
+                  onChange={(e) => set("divisions", c.divisions.map((x, j) => (j === i ? { ...x, active: e.target.checked } : x)))} />
+                {!d.code || d.active !== false ? "Active" : "Stopped"}
+              </label>
               <button type="button" onClick={() => set("divisions", c.divisions.filter((_, j) => j !== i))} style={{ border: "none", background: "none", color: "#ef4444", cursor: "pointer" }}><Trash2 size={15} /></button>
             </div>
           ))}
@@ -299,7 +305,7 @@ export default function LocationsAdmin() {
               {country.divisions.map((d) => (
                 <button key={d.code || "base"} onClick={() => setDivision(d.code || "")}
                   style={btn((d.code || "") === division ? "#2563eb" : "#f1f5f9", (d.code || "") === division ? "#fff" : "#0f172a")}>
-                  {d.ar}{d.en ? ` · ${d.en}` : ""}
+                  {d.ar}{d.en ? ` · ${d.en}` : ""}{d.code && d.active === false ? " · Stopped" : ""}
                 </button>
               ))}
             </div>
