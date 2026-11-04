@@ -55,6 +55,8 @@ function CountryForm({ initial, onSave, onClose }) {
       const body = { ...c, code: c.code.toUpperCase(), currency: c.currency.toUpperCase() };
       if (!body.fr_name) delete body.fr_name;
       if (!body.phone_pattern) delete body.phone_pattern;
+      body.divisions = (body.divisions || []).filter((d) => d.ar?.trim()).map(({ code, ar, fr, en }) => ({ code: code || "", ar, ...(fr ? { fr } : {}), ...(en ? { en } : {}) }));
+      if (!body.divisions.length) delete body.divisions;
       await onSave(body);
       onClose();
     } catch (e) { setError(errMsg(e)); } finally { setBusy(false); }
@@ -69,6 +71,20 @@ function CountryForm({ initial, onSave, onClose }) {
         <Field label="Nom (FR)"><input style={input} value={c.fr_name || ""} onChange={(e) => set("fr_name", e.target.value)} placeholder="Maroc" /></Field>
         <Field label="Phone prefix"><input style={input} value={c.phone_prefix} onChange={(e) => set("phone_prefix", e.target.value)} placeholder="+212" /></Field>
         <div style={{ gridColumn: "1 / -1" }}><Field label="Phone pattern (regex, local number)"><input style={{ ...input, fontFamily: "monospace" }} value={c.phone_pattern || ""} onChange={(e) => set("phone_pattern", e.target.value)} placeholder="^0[67]\d{8}$" /></Field></div>
+        <div style={{ gridColumn: "1 / -1", marginBottom: 10 }}>
+          <span style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#475569", marginBottom: 4 }}>Divisions (optional — e.g. Algeria 58 / 69 wilayas). Code empty = base list</span>
+          {(c.divisions || []).map((d, i) => (
+            <div key={i} style={{ display: "grid", gridTemplateColumns: "70px 1fr 1fr 1fr 32px", gap: 6, marginBottom: 6 }}>
+              <input style={{ ...input, fontFamily: "monospace" }} value={d.code} maxLength={8} placeholder="69" onChange={(e) => set("divisions", c.divisions.map((x, j) => (j === i ? { ...x, code: e.target.value.trim() } : x)))} />
+              {["ar", "fr", "en"].map((lang) => (
+                <input key={lang} style={{ ...input, direction: lang === "ar" ? "rtl" : "ltr" }} value={d[lang] || ""} placeholder={`${lang === "ar" ? "69 ولاية" : lang === "fr" ? "69 wilayas" : "69 provinces"}`}
+                  onChange={(e) => set("divisions", c.divisions.map((x, j) => (j === i ? { ...x, [lang]: e.target.value } : x)))} />
+              ))}
+              <button type="button" onClick={() => set("divisions", c.divisions.filter((_, j) => j !== i))} style={{ border: "none", background: "none", color: "#ef4444", cursor: "pointer" }}><Trash2 size={15} /></button>
+            </div>
+          ))}
+          <button type="button" onClick={() => set("divisions", [...(c.divisions || []), { code: (c.divisions || []).length ? "" : "", ar: "", fr: "", en: "" }])} style={btn("#eff6ff", "#2563eb")}><Plus size={14} /> Division</button>
+        </div>
         {["region", "locality"].map((lvl) => (
           <div key={lvl} style={{ gridColumn: "1 / -1", display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
             {["ar", "fr", "en"].map((lang) => (
@@ -96,7 +112,7 @@ function RegionForm({ country, initial, onSave, onClose }) {
     setBusy(true); setError(null);
     try {
       const region = {
-        id: Number(r.id), name: r.name, ar_name: r.ar_name, ...(r.code ? { code: r.code } : {}),
+        id: Number(r.id), name: r.name, ar_name: r.ar_name, ...(r.code ? { code: r.code } : {}), ...(Number(r.ship_as) ? { ship_as: Number(r.ship_as) } : {}),
         localities: r.localities.map((l) => ({ id: Number(l.id), name: l.name, ar_name: l.ar_name, ...(l.post_code ? { post_code: String(l.post_code) } : {}) })),
       };
       await onSave(region);
@@ -110,6 +126,7 @@ function RegionForm({ country, initial, onSave, onClose }) {
         <Field label="Name"><input style={input} value={r.name} onChange={(e) => setR({ ...r, name: e.target.value })} /></Field>
         <Field label="الاسم"><input style={{ ...input, direction: "rtl" }} value={r.ar_name} onChange={(e) => setR({ ...r, ar_name: e.target.value })} /></Field>
         <Field label="Code"><input style={input} value={r.code || ""} onChange={(e) => setR({ ...r, code: e.target.value })} placeholder={`${country}-…`} /></Field>
+        <Field label="Ship as (courier wilaya)"><input style={input} type="number" value={r.ship_as || ""} onChange={(e) => setR({ ...r, ship_as: e.target.value })} placeholder="—" /></Field>
       </div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "6px 0 8px" }}>
         <b style={{ fontSize: 13 }}>Localities ({r.localities.length})</b>
@@ -137,6 +154,7 @@ export default function LocationsAdmin() {
   const [countries, setCountries] = useState([]);
   const [shippable, setShippable] = useState([]);
   const [selected, setSelected] = useState("DZ");
+  const [division, setDivision] = useState(""); // تقسيم الدولة ('' = الأساسي، '69' = الجزائر 69 ولاية)
   const [regions, setRegions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [q, setQ] = useState("");
@@ -153,15 +171,17 @@ export default function LocationsAdmin() {
     } catch (e) { say(errMsg(e), "error"); }
   }, []);
 
-  const loadRegions = useCallback(async (cc) => {
+  const loadRegions = useCallback(async (cc, div = "") => {
     setLoading(true);
-    try { const { data } = await api.get(`/admin/locations/countries/${cc}/regions`); setRegions(data || []); }
+    try { const { data } = await api.get(`/admin/locations/countries/${cc}/regions`, { params: div ? { division: div } : {} }); setRegions(data || []); }
     catch (e) { setRegions([]); say(errMsg(e), "error"); }
     finally { setLoading(false); }
   }, []);
 
   useEffect(() => { loadCountries(); }, [loadCountries]);
-  useEffect(() => { if (selected) loadRegions(selected); }, [selected, loadRegions]);
+  useEffect(() => { setDivision(""); }, [selected]);
+  useEffect(() => { if (selected) loadRegions(selected, division); }, [selected, division, loadRegions]);
+  const divParams = division ? { params: { division } } : {};
 
   const country = countries.find((c) => c.code === selected);
   const shown = useMemo(() => {
@@ -186,12 +206,12 @@ export default function LocationsAdmin() {
     await loadCountries(); setSelected(body.code); say(`${body.code} saved`);
   };
   const saveRegion = async (region) => {
-    const { data } = await api.post(`/admin/locations/countries/${selected}/region`, { region });
-    await Promise.all([loadRegions(selected), loadCountries()]);
+    const { data } = await api.post(`/admin/locations/countries/${selected}/region`, { region }, divParams);
+    await Promise.all([loadRegions(selected, division), loadCountries()]);
     say(`${data.created ? "Added" : "Updated"} region ${region.id} · ${data.localities} localities in ${selected}`);
   };
   const openRegion = async (r) => {
-    try { const { data } = await api.get(`/admin/locations/countries/${selected}/regions`, { params: { regionId: r.id } }); setRegionModal(data); }
+    try { const { data } = await api.get(`/admin/locations/countries/${selected}/regions`, { params: { regionId: r.id, ...(division ? { division } : {}) } }); setRegionModal(data); }
     catch (e) { say(errMsg(e), "error"); }
   };
   const importJson = (file) => {
@@ -200,10 +220,14 @@ export default function LocationsAdmin() {
       try {
         const json = JSON.parse(reader.result);
         const cc = (json.country || selected).toUpperCase();
-        if (!window.confirm(`Replace ALL regions of ${cc} with ${json.regions?.length ?? 0} regions from this file?`)) return;
-        const { data } = await api.post(`/admin/locations/countries/${cc}/regions`, { regions: json.regions });
-        await Promise.all([loadRegions(cc), loadCountries()]); setSelected(cc);
-        say(`${cc}: ${data.regions} regions, ${data.localities} localities imported`);
+        // الملف يحدّد تقسيمه (division)، وإلا التقسيم المعروض حالياً
+        const div = String(json.division ?? (cc === selected ? division : "") ?? "");
+        const label = `${cc}${div ? ` (${div})` : ""}`;
+        if (!window.confirm(`Replace ALL regions of ${label} with ${json.regions?.length ?? 0} regions from this file?`)) return;
+        const { data } = await api.post(`/admin/locations/countries/${cc}/regions`, { regions: json.regions }, div ? { params: { division: div } } : {});
+        setSelected(cc); setTimeout(() => setDivision(div), 0);
+        await Promise.all([loadRegions(cc, div), loadCountries()]);
+        say(`${label}: ${data.regions} regions, ${data.localities} localities imported`);
       } catch (e) { say(errMsg(e), "error"); }
     };
     reader.readAsText(file);
@@ -268,6 +292,16 @@ export default function LocationsAdmin() {
                 </label>
                 <button onClick={() => setRegionModal({ id: "", name: "", ar_name: "", code: "", localities: [] })} style={btn()}><Plus size={14} /> Region</button>
               </div>
+            </div>
+          )}
+          {country?.divisions?.length > 1 && (
+            <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+              {country.divisions.map((d) => (
+                <button key={d.code || "base"} onClick={() => setDivision(d.code || "")}
+                  style={btn((d.code || "") === division ? "#2563eb" : "#f1f5f9", (d.code || "") === division ? "#fff" : "#0f172a")}>
+                  {d.ar}{d.en ? ` · ${d.en}` : ""}
+                </button>
+              ))}
             </div>
           )}
           <div style={{ position: "relative", marginBottom: 10 }}>
