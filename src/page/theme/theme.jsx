@@ -111,10 +111,10 @@ function NichePicker({ niches, nicheId, secondary, onChange }) {
     );
 }
 
-function ThemeForm({ initial = {}, types = [], niches = [], onSubmit, loading }) {
+function ThemeForm({ initial = {}, niches = [], onSubmit, loading }) {
     const [f, setF] = useState({
         name_en: "", name_ar: "", name_fr: "", slug: "", price: 0,
-        desc_en: "", desc_ar: "", desc_fr: "", imageUrl: "", tag: "", typeId: "",
+        desc_en: "", desc_ar: "", desc_fr: "", imageUrl: "", tag: "",
         ...initial,
         ownerEmail: initial.ownerEmail ?? "",
         isTesting: !!initial.isTesting,
@@ -125,7 +125,8 @@ function ThemeForm({ initial = {}, types = [], niches = [], onSubmit, loading })
     const handleSubmit = e => {
         e.preventDefault();
         // الحقول المسموح بإرسالها فقط (لا علاقات ولا id)
-        const { niche: _n, secondaryNiches: _s, type: _t, themePlans: _p, themeUsers: _u, id: _id, nicheMatch: _m, ...body } = f;
+        // النوع (typeId) لم يعد يُرسل: المجالات وزر التجربة والبريد حلّت محله
+        const { niche: _n, secondaryNiches: _s, type: _t, typeId: _ty, themePlans: _p, themeUsers: _u, id: _id, nicheMatch: _m, ...body } = f;
         onSubmit({ ...body, price: Number(f.price), tag: f.tag ? (Array.isArray(f.tag) ? f.tag : String(f.tag).split(",").map(t => t.trim()).filter(Boolean)) : [] });
     };
     const col2 = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 };
@@ -144,12 +145,6 @@ function ThemeForm({ initial = {}, types = [], niches = [], onSubmit, loading })
             <div style={col2}>
                 <Field label="Price" required>
                     <input style={inp} type="number" step="0.01" min="0" value={f.price} onChange={set("price")} required />
-                </Field>
-                <Field label="Type">
-                    <select style={inp} value={f.typeId} onChange={set("typeId")}>
-                        <option value="">— None —</option>
-                        {types.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                    </select>
                 </Field>
             </div>
             {/* ثيم مخصص: بريد التاجر ← يراه ويثبّته هو فقط. التجربة: مخفي عن كل التجار */}
@@ -332,10 +327,7 @@ function ThemePlanModal({ theme, plans, onClose, onToast }) {
 }
 
 // ─── ThemeCard ────────────────────────────────────────────────────────────────
-function ThemeCard({ theme, types, onEdit, onDelete, toggleActive, onManagePlans }) {
-    const typeName = Array.isArray(types)
-        ? types.find(t => t.id === theme.typeId)?.name
-        : null;
+function ThemeCard({ theme, onEdit, onDelete, toggleActive, onManagePlans }) {
 
     const btnBase = {
         flex: 1, padding: "7px 0", background: "#f8fafc", border: "1px solid #e2e8f0",
@@ -362,11 +354,6 @@ function ThemeCard({ theme, types, onEdit, onDelete, toggleActive, onManagePlans
                 {(theme.isTesting || theme.ownerEmail) && (
                     <span title={theme.ownerEmail || ""} style={{ position: "absolute", bottom: 8, left: 8, maxWidth: "85%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", background: theme.isTesting ? "#f59e0b" : "#7c3aed", color: "#fff", fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: 20 }}>
                         {theme.isTesting ? "🧪 Testing" : `👤 ${theme.ownerEmail}`}
-                    </span>
-                )}
-                {typeName && ["custom", "testing"].includes(typeName) && (
-                    <span style={{ position: "absolute", top: 8, right: 8, background: "#f59e0b", color: "#fff", fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: 20 }}>
-                        hidden · {typeName}
                     </span>
                 )}
             </div>
@@ -460,7 +447,6 @@ function Stat({ label, value, accent }) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function ThemePage() {
     const [themes, setThemes] = useState([]);
-    const [types, setTypes] = useState([]);
     const [plans, setPlans] = useState([]);
     const [meta, setMeta] = useState({ totalItems: 0, totalPages: 1, currentPage: 1 });
     const [query, setQuery] = useState("");
@@ -476,15 +462,10 @@ export default function ThemePage() {
     const [editing, setEditing] = useState(null);
     const [planTarget, setPlanTarget] = useState(null);
     const [toast, setToast] = useState(null);
-    const [typeName, setTypeName] = useState("");
     const [saving, setSaving] = useState(false);
 
     const showToast = (msg, type = "success") => setToast({ msg, type });
 
-    const loadTypes = useCallback(async () => {
-        try { const res = await api.get("/theme/type", { params: { isAdmin: true } }); setTypes(res.data); }
-        catch { /* silent */ }
-    }, []);
 
     const loadNiches = useCallback(async () => {
         try { const res = await api.get("/niches"); const d = res.data?.data ?? res.data; setNiches(Array.isArray(d) ? [...d].sort((a, b) => a.name_en.localeCompare(b.name_en)) : []); }
@@ -510,7 +491,7 @@ export default function ThemePage() {
         finally { setLoading(false); }
     }, [query, filterType, filterNiche, page]);
 
-    useEffect(() => { loadTypes(); loadPlans(); loadNiches(); }, [loadTypes, loadPlans, loadNiches]);
+    useEffect(() => { loadPlans(); loadNiches(); }, [loadPlans, loadNiches]);
     useEffect(() => { loadThemes(); }, [loadThemes]);
     useEffect(() => {
         const t = setTimeout(() => setPage(1), 350);
@@ -541,20 +522,6 @@ export default function ThemePage() {
         if (!confirm(`${currentStatus ? "Deactivate" : "Activate"} this theme?`)) return;
         try { await api.patch(`/theme/${id}`, { isActive: !currentStatus }); showToast(`Theme ${!currentStatus ? "Activated" : "Deactivated"}!`); loadThemes(); }
         catch { showToast("Update failed", "error"); }
-    };
-
-    const handleCreateType = async () => {
-        if (!typeName.trim()) return;
-        setSaving(true);
-        try { await api.post("/theme/type", { name: typeName }); setTypeName(""); showToast("Type added!"); loadTypes(); }
-        catch { showToast("Failed", "error"); }
-        setSaving(false);
-    };
-
-    const handleDeleteType = async id => {
-        if (!confirm("Delete type?")) return;
-        try { await api.delete(`/theme/type/${id}`); showToast("Type deleted"); loadTypes(); }
-        catch { showToast("Failed", "error"); }
     };
 
     const openPlanModal  = (theme) => { setPlanTarget(theme); setModal("plans"); };
@@ -605,7 +572,6 @@ export default function ThemePage() {
                     <div style={{ display: "flex", gap: 8, marginLeft: "auto" }}>
                         <button style={btnOutline(viewMode === "grid")} onClick={() => setViewMode("grid")} title="Grid view"><GridIcon /></button>
                         <button style={btnOutline(viewMode === "list")} onClick={() => setViewMode("list")} title="List view"><ListIcon /></button>
-                        <button style={btnOutline(false)} onClick={() => setModal("type")} title="Manage types"><SlidersIcon /></button>
                         <button style={btnPrimary} onClick={() => setModal("create")}><PlusIcon /> New Theme</button>
                     </div>
                 </div>
@@ -614,7 +580,7 @@ export default function ThemePage() {
                 <div style={{ display: "flex", gap: 10 }}>
                     <Stat label="Total" value={meta.totalItems} accent="#2563eb" />
                     <Stat label="Page" value={`${meta.currentPage} / ${meta.totalPages}`} />
-                    <Stat label="Types" value={types.length} />
+                    <Stat label="Niches" value={niches.length} />
                     <Stat label="Plans" value={plans.length} accent="#7c3aed" />
                 </div>
 
@@ -634,7 +600,7 @@ export default function ThemePage() {
                 ) : viewMode === "grid" ? (
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))", gap: 14 }}>
                         {themes.map(t => (
-                            <ThemeCard key={t.id} theme={t} types={types}
+                            <ThemeCard key={t.id} theme={t}
                                 onEdit={th => { setEditing(th); setModal("edit"); }}
                                 onDelete={handleDelete}
                                 toggleActive={handleToggle}
@@ -645,7 +611,7 @@ export default function ThemePage() {
                 ) : (
                     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                         {themes.map(t => {
-                            const tName = types.find(x => x.id === t.typeId)?.name;
+                            const tName = t.niche ? `${t.niche.icon} ${t.niche.name_en}` : "🌐 General";
                             return (
                                 <div key={t.id}
                                     style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 10, padding: "12px 18px", display: "flex", alignItems: "center", gap: 14, transition: "box-shadow .15s" }}
@@ -716,12 +682,12 @@ export default function ThemePage() {
             {/* ── Modals ── */}
             {modal === "create" && (
                 <Modal title="Create New Theme" onClose={() => setModal(null)} wide>
-                    <ThemeForm types={types} niches={niches} onSubmit={handleCreate} loading={saving} />
+                    <ThemeForm niches={niches} onSubmit={handleCreate} loading={saving} />
                 </Modal>
             )}
             {modal === "edit" && editing && (
                 <Modal title={`Edit — ${editing.name_en || editing.slug}`} onClose={() => { setModal(null); setEditing(null); }} wide>
-                    <ThemeForm initial={editing} types={types} niches={niches} onSubmit={handleUpdate} loading={saving} />
+                    <ThemeForm initial={editing} niches={niches} onSubmit={handleUpdate} loading={saving} />
                 </Modal>
             )}
             {modal === "plans" && planTarget && (
@@ -731,37 +697,6 @@ export default function ThemePage() {
                     onClose={() => { setModal(null); setPlanTarget(null); }}
                     onToast={showToast}
                 />
-            )}
-            {modal === "type" && (
-                <Modal title="Manage Theme Types" onClose={() => setModal(null)}>
-                    <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
-                        <input
-                            value={typeName} onChange={e => setTypeName(e.target.value)}
-                            placeholder="New type name…" style={{ ...inp, flex: 1 }}
-                            onKeyDown={e => e.key === "Enter" && handleCreateType()}
-                        />
-                        <button onClick={handleCreateType} disabled={saving || !typeName.trim()}
-                            style={{ padding: "9px 18px", background: saving || !typeName.trim() ? "#e2e8f0" : "#2563eb", border: "none", borderRadius: 8, color: saving || !typeName.trim() ? "#94a3b8" : "#fff", fontWeight: 700, cursor: saving ? "not-allowed" : "pointer" }}>
-                            Add
-                        </button>
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                        {types.length === 0
-                            ? <div style={{ color: "#94a3b8", fontSize: 13, textAlign: "center", padding: "20px 0" }}>No types yet</div>
-                            : types.map(t => (
-                                <div key={t.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", background: "#f8fafc", borderRadius: 8, border: "1px solid #e2e8f0" }}>
-                                    <span style={{ fontSize: 14, color: "#0f172a", fontWeight: 600 }}>{t.name}</span>
-                                    <button onClick={() => handleDeleteType(t.id)}
-                                        style={{ padding: "5px 8px", border: "1px solid #e2e8f0", borderRadius: 6, background: "#fff", color: "#94a3b8", cursor: "pointer" }}
-                                        onMouseEnter={e => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.color = "#dc2626"; e.currentTarget.style.borderColor = "#fca5a5"; }}
-                                        onMouseLeave={e => { e.currentTarget.style.background = "#fff"; e.currentTarget.style.color = "#94a3b8"; e.currentTarget.style.borderColor = "#e2e8f0"; }}>
-                                        <TrashIcon />
-                                    </button>
-                                </div>
-                            ))
-                        }
-                    </div>
-                </Modal>
             )}
 
             {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
