@@ -100,7 +100,7 @@ function Reader({ box, uid, onBack, onRead }) {
   };
 
   return (
-    <div className="flex flex-col h-full min-h-0">
+    <div className="flex flex-col h-full min-h-0 min-w-0">
       <div className="flex items-center gap-2 pb-3 border-b border-gray-100">
         <button type="button" onClick={onBack} className="lg:hidden p-2 -ms-2 rounded-lg text-gray-500"><span className="inline-block mail-chev"><ArrowRight size={18} /></span></button>
         <p className="font-bold text-gray-900 truncate flex-1">{msg?.subject || (error ? '' : '…')}</p>
@@ -108,8 +108,8 @@ function Reader({ box, uid, onBack, onRead }) {
       {error && <p className="text-sm text-red-500 py-6 text-center">{error}</p>}
       {!msg && !error && <div className="flex justify-center py-12"><Loader2 className="animate-spin text-blue-600" /></div>}
       {msg && (
-        <div className="flex-1 min-h-0 overflow-y-auto space-y-3 pt-3">
-          <div className="text-sm space-y-0.5">
+        <div className="flex-1 min-h-0 min-w-0 overflow-y-auto space-y-3 pt-3">
+          <div className="text-sm space-y-0.5 break-all">
             <p><b className="text-gray-900">{person(msg.from)}</b> <bdi dir="ltr" className="text-gray-400">&lt;{msg.from?.address}&gt;</bdi></p>
             {msg.to?.length > 0 && <p className="text-xs text-gray-400">{t('mail.to')}: <bdi dir="ltr">{msg.to.map((p) => p.address).join(', ')}</bdi></p>}
             <p className="text-xs text-gray-400"><bdi dir="ltr">{fmtDate(msg.date)}</bdi></p>
@@ -225,9 +225,9 @@ export default function MailboxPage() {
             ))}
           </div>
 
-          <div className="grid lg:grid-cols-[minmax(320px,400px)_1fr] gap-4 lg:h-[calc(100dvh-260px)] lg:min-h-[480px]">
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(320px,400px)_1fr] gap-4 lg:h-[calc(100dvh-260px)] lg:min-h-[480px]">
             {/* القائمة (تختفي على الهاتف عند فتح رسالة) */}
-            <div className={`${uid ? 'hidden lg:flex' : 'flex'} flex-col min-h-0 bg-white border border-gray-200 rounded-2xl overflow-hidden`}>
+            <div className={`${uid ? 'hidden lg:flex' : 'flex'} flex-col min-h-0 min-w-0 bg-white border border-gray-200 rounded-2xl overflow-hidden`}>
               <div className="flex items-center gap-2 p-3 border-b border-gray-100">
                 <form onSubmit={(e) => { e.preventDefault(); if (q.trim() !== search) { reset(); setSearch(q.trim()); } }} className="relative flex-1">
                   <Search size={15} className="absolute top-1/2 -translate-y-1/2 start-3 text-gray-400" />
@@ -259,7 +259,7 @@ export default function MailboxPage() {
             </div>
 
             {/* الرسالة */}
-            <div className={`${uid ? 'flex' : 'hidden lg:flex'} flex-col min-h-0 bg-white border border-gray-200 rounded-2xl p-4`}>
+            <div className={`${uid ? 'flex' : 'hidden lg:flex'} flex-col min-h-0 min-w-0 bg-white border border-gray-200 rounded-2xl p-4`}>
               {uid && box
                 ? <Reader box={box} uid={uid} onBack={() => setUid(null)} onRead={markRead} />
                 : <div className="m-auto text-center text-gray-400"><Reply size={26} className="mx-auto mb-2 text-gray-300" /><p className="text-sm">{t('mail.pick')}</p></div>}

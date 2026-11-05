@@ -6,9 +6,9 @@ import { CheckCircle2, Filter, Loader2, Megaphone, Send, Users } from 'lucide-re
 
 const api = axios.create({ baseURL: import.meta.env.VITE_API_URL, headers: { 'Content-Type': 'application/json' } });
 const errText = (e, f) => { const m = e?.response?.data?.message; return (Array.isArray(m) ? m[0] : m) || f; };
-const input = 'w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 bg-gray-50 focus:bg-white';
+const input = 'w-full min-w-0 px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 bg-gray-50 focus:bg-white';
 const label = 'text-[11px] font-bold text-gray-400 uppercase tracking-wide';
-const card = 'bg-white border border-gray-200 rounded-2xl p-4 sm:p-5';
+const card = 'min-w-0 bg-white border border-gray-200 rounded-2xl p-4 sm:p-5';
 const fmtDate = (d) => (d ? new Date(d).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '');
 
 const EMPTY = { registeredFrom: '', registeredTo: '', verified: '', hasStore: '', subscription: '', planId: '', walletMin: '', walletMax: '', noOrdersDays: '' };
@@ -117,36 +117,36 @@ export default function CampaignsPage() {
         <p className="text-sm text-gray-400">{t('camp.subtitle')}</p>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-4 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
         {/* الشروط */}
         <section className={`${card} space-y-3`}>
           <p className="flex items-center gap-2 font-bold text-gray-900"><Filter size={16} className="text-blue-600" />{t('camp.conditions')}</p>
           <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1.5"><span className={label}>{t('camp.registered_from')}</span><input type="date" value={f.registeredFrom} onChange={set('registeredFrom')} className={input} /></div>
-            <div className="flex flex-col gap-1.5"><span className={label}>{t('camp.registered_to')}</span><input type="date" value={f.registeredTo} onChange={set('registeredTo')} className={input} /></div>
-            <div className="flex flex-col gap-1.5"><span className={label}>{t('camp.verified')}</span>{yesNo('verified')}</div>
-            <div className="flex flex-col gap-1.5"><span className={label}>{t('camp.has_store')}</span>{yesNo('hasStore')}</div>
-            <div className="flex flex-col gap-1.5"><span className={label}>{t('camp.subscription')}</span>
+            <div className="flex flex-col gap-1.5 min-w-0"><span className={label}>{t('camp.registered_from')}</span><input type="date" value={f.registeredFrom} onChange={set('registeredFrom')} className={input} /></div>
+            <div className="flex flex-col gap-1.5 min-w-0"><span className={label}>{t('camp.registered_to')}</span><input type="date" value={f.registeredTo} onChange={set('registeredTo')} className={input} /></div>
+            <div className="flex flex-col gap-1.5 min-w-0"><span className={label}>{t('camp.verified')}</span>{yesNo('verified')}</div>
+            <div className="flex flex-col gap-1.5 min-w-0"><span className={label}>{t('camp.has_store')}</span>{yesNo('hasStore')}</div>
+            <div className="flex flex-col gap-1.5 min-w-0"><span className={label}>{t('camp.subscription')}</span>
               <select value={f.subscription} onChange={set('subscription')} className={input}>
                 <option value="">{t('camp.any')}</option>
                 {['active', 'trial', 'expired', 'none'].map((s) => <option key={s} value={s}>{t(`camp.sub_${s}`)}</option>)}
               </select>
             </div>
-            <div className="flex flex-col gap-1.5"><span className={label}>{t('camp.plan')}</span>
+            <div className="flex flex-col gap-1.5 min-w-0"><span className={label}>{t('camp.plan')}</span>
               <select value={f.planId} onChange={set('planId')} className={input}>
                 <option value="">{t('camp.any')}</option>
                 {plans.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
             </div>
-            <div className="flex flex-col gap-1.5"><span className={label}>{t('camp.wallet_min')}</span><input type="number" min="0" dir="ltr" value={f.walletMin} onChange={set('walletMin')} className={input} /></div>
-            <div className="flex flex-col gap-1.5"><span className={label}>{t('camp.wallet_max')}</span><input type="number" min="0" dir="ltr" value={f.walletMax} onChange={set('walletMax')} className={input} /></div>
-            <div className="flex flex-col gap-1.5 col-span-2"><span className={label}>{t('camp.no_orders_days')}</span><input type="number" min="1" dir="ltr" value={f.noOrdersDays} onChange={set('noOrdersDays')} className={input} /></div>
+            <div className="flex flex-col gap-1.5 min-w-0"><span className={label}>{t('camp.wallet_min')}</span><input type="number" min="0" dir="ltr" value={f.walletMin} onChange={set('walletMin')} className={input} /></div>
+            <div className="flex flex-col gap-1.5 min-w-0"><span className={label}>{t('camp.wallet_max')}</span><input type="number" min="0" dir="ltr" value={f.walletMax} onChange={set('walletMax')} className={input} /></div>
+            <div className="flex flex-col gap-1.5 min-w-0 col-span-2"><span className={label}>{t('camp.no_orders_days')}</span><input type="number" min="1" dir="ltr" value={f.noOrdersDays} onChange={set('noOrdersDays')} className={input} /></div>
           </div>
           <div className="flex items-center justify-between gap-2 pt-1">
             <button type="button" onClick={() => setF(EMPTY)} className="text-xs font-bold text-gray-400 hover:text-gray-600">{t('camp.clear')}</button>
           </div>
           {/* المعاينة */}
-          <div className="rounded-xl bg-blue-50 p-3">
+          <div className="rounded-xl bg-blue-50 p-3 min-w-0">
             {preview === 'loading' || preview === null ? <Loader2 size={16} className="animate-spin text-blue-600" />
               : preview.error ? <p className="text-sm text-red-500">{preview.error}</p>
               : (
@@ -162,8 +162,8 @@ export default function CampaignsPage() {
         {/* الرسالة */}
         <section className={`${card} space-y-3`}>
           <p className="flex items-center gap-2 font-bold text-gray-900"><Megaphone size={16} className="text-blue-600" />{t('camp.message')}</p>
-          <div className="flex flex-col gap-1.5"><span className={label}>{t('camp.subject')}</span><input dir="auto" maxLength={255} value={subject} onChange={(e) => setSubject(e.target.value)} className={input} /></div>
-          <div className="flex flex-col gap-1.5"><span className={label}>{t('camp.body')}</span><textarea dir="auto" rows={10} value={body} onChange={(e) => setBody(e.target.value)} className={`${input} resize-y`} /></div>
+          <div className="flex flex-col gap-1.5 min-w-0"><span className={label}>{t('camp.subject')}</span><input dir="auto" maxLength={255} value={subject} onChange={(e) => setSubject(e.target.value)} className={input} /></div>
+          <div className="flex flex-col gap-1.5 min-w-0"><span className={label}>{t('camp.body')}</span><textarea dir="auto" rows={10} value={body} onChange={(e) => setBody(e.target.value)} className={`${input} resize-y`} /></div>
           <p className="text-[11px] text-gray-400">{t('settings.vars_hint')} {t('camp.unsub_note')}</p>
           <div className="flex items-center gap-2">
             <input type="email" dir="ltr" value={testTo} onChange={(e) => setTestTo(e.target.value)} className={input} />
