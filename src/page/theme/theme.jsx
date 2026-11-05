@@ -485,7 +485,6 @@ export default function ThemePage() {
         try {
             const params = { page, limit: LIMIT, isAdmin: true };
             if (query) params.query = query;
-            if (filterType) params.type = filterType;
             if (filterNiche) params.niche = filterNiche;
             const res = await api.get("/theme", { params });
             setThemes(res.data.data ?? []);
@@ -580,19 +579,15 @@ export default function ThemePage() {
                         />
                     </div>
 
+                    {/* فلتر بالمجال فقط (أساسي أو ثانوي) — الأنواع لم تعد تُستعمل للتصنيف */}
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                        {[{ id: "", name: "All" }, ...types].map(t => (
-                            <button key={t.id} onClick={() => { setFilterType(t.id); setPage(1); }}
-                                style={{ padding: "7px 14px", border: "1px solid", borderRadius: 20, fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all .15s", borderColor: filterType === t.id ? "#2563eb" : "#e2e8f0", background: filterType === t.id ? "#2563eb" : "#fff", color: filterType === t.id ? "#fff" : "#64748b" }}>
-                                {t.name}
+                        {[{ id: "", icon: "", name_en: "All" }, ...niches].map(n => (
+                            <button key={n.id || "all"} onClick={() => { setFilterNiche(n.id); setPage(1); }}
+                                style={{ padding: "7px 14px", border: "1px solid", borderRadius: 20, fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all .15s", borderColor: filterNiche === n.id ? "#2563eb" : "#e2e8f0", background: filterNiche === n.id ? "#2563eb" : "#fff", color: filterNiche === n.id ? "#fff" : "#64748b" }}>
+                                {n.icon} {n.name_en}
                             </button>
                         ))}
                     </div>
-
-                    <select value={filterNiche} onChange={e => { setFilterNiche(e.target.value); setPage(1); }} style={{ ...inp, width: 220 }}>
-                        <option value="">All niches</option>
-                        {niches.map(n => <option key={n.id} value={n.id}>{n.icon} {n.name_en}</option>)}
-                    </select>
 
                     <div style={{ display: "flex", gap: 8, marginLeft: "auto" }}>
                         <button style={btnOutline(viewMode === "grid")} onClick={() => setViewMode("grid")} title="Grid view"><GridIcon /></button>
