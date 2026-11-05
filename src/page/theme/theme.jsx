@@ -80,16 +80,51 @@ function Field({ label, required, children }) {
 }
 
 // ─── ThemeForm ────────────────────────────────────────────────────────────────
-function ThemeForm({ initial = {}, types = [], onSubmit, loading }) {
+// المجالات: أساسي واحد (فارغ = عام يناسب الكل) + ثانوية بلا حد — بدل «النوع» تدريجياً
+function NichePicker({ niches, nicheId, secondary, onChange }) {
+    const [q, setQ] = useState("");
+    const shown = niches.filter(n => n.id !== nicheId && (!q || `${n.name_ar} ${n.name_en} ${n.name_fr}`.toLowerCase().includes(q.toLowerCase())));
+    const toggle = id => onChange(secondary.includes(id) ? secondary.filter(x => x !== id) : [...secondary, id]);
+    return (
+        <>
+            <Field label="Primary niche (empty = general, fits every store)">
+                <select style={inp} value={nicheId || ""} onChange={e => onChange(secondary.filter(x => x !== e.target.value), e.target.value || null)}>
+                    <option value="">🌐 General — all niches</option>
+                    {niches.map(n => <option key={n.id} value={n.id}>{n.icon} {n.name_en} — {n.name_ar}</option>)}
+                </select>
+            </Field>
+            <Field label={`Secondary niches (${secondary.length}) — also suits`}>
+                <input style={{ ...inp, marginBottom: 8 }} value={q} onChange={e => setQ(e.target.value)} placeholder="Search niches…" />
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, maxHeight: 150, overflowY: "auto" }}>
+                    {shown.map(n => {
+                        const on = secondary.includes(n.id);
+                        return (
+                            <button type="button" key={n.id} onClick={() => toggle(n.id)}
+                                style={{ padding: "5px 10px", borderRadius: 16, border: "1px solid", fontSize: 12, fontWeight: 600, cursor: "pointer", borderColor: on ? "#2563eb" : "#e2e8f0", background: on ? "#eff6ff" : "#fff", color: on ? "#2563eb" : "#475569" }}>
+                                {n.icon} {n.name_en}{on ? " ✓" : ""}
+                            </button>
+                        );
+                    })}
+                </div>
+            </Field>
+        </>
+    );
+}
+
+function ThemeForm({ initial = {}, types = [], niches = [], onSubmit, loading }) {
     const [f, setF] = useState({
         name_en: "", name_ar: "", name_fr: "", slug: "", price: 0,
         desc_en: "", desc_ar: "", desc_fr: "", imageUrl: "", tag: "", typeId: "",
         ...initial,
+        nicheId: initial.nicheId ?? null,
+        secondaryNicheIds: (initial.secondaryNiches ?? []).map(n => n.id),
     });
     const set = k => e => setF(p => ({ ...p, [k]: e.target.value }));
     const handleSubmit = e => {
         e.preventDefault();
-        onSubmit({ ...f, price: Number(f.price), tag: f.tag ? String(f.tag).split(",").map(t => t.trim()).filter(Boolean) : [] });
+        // الحقول المسموح بإرسالها فقط (لا علاقات ولا id)
+        const { niche: _n, secondaryNiches: _s, type: _t, themePlans: _p, themeUsers: _u, id: _id, nicheMatch: _m, ...body } = f;
+        onSubmit({ ...body, price: Number(f.price), tag: f.tag ? (Array.isArray(f.tag) ? f.tag : String(f.tag).split(",").map(t => t.trim()).filter(Boolean)) : [] });
     };
     const col2 = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 };
     const ta = { ...inp, resize: "vertical", minHeight: 72 };
@@ -115,6 +150,8 @@ function ThemeForm({ initial = {}, types = [], onSubmit, loading }) {
                     </select>
                 </Field>
             </div>
+            <NichePicker niches={niches} nicheId={f.nicheId} secondary={f.secondaryNicheIds}
+                onChange={(secondary, primary) => setF(p => ({ ...p, secondaryNicheIds: secondary, ...(primary !== undefined ? { nicheId: primary } : {}) }))} />
             <Field label="Image URL">
                 <input style={inp} type="url" value={f.imageUrl} onChange={set("imageUrl")} placeholder="https://…" />
             </Field>
@@ -306,9 +343,13 @@ function ThemeCard({ theme, types, onEdit, onDelete, toggleActive, onManagePlans
                     ? <img src={theme.imageUrl} alt={theme.name_en} style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => { e.target.style.display = "none"; }} />
                     : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#cbd5e1" }}><TagIcon /></div>
                 }
-                {typeName && (
-                    <span style={{ position: "absolute", top: 8, left: 8, background: "#2563eb", color: "#fff", fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: 20 }}>
-                        {typeName}
+                {/* المجال الأساسي (أو «عام») + عدد الثانوية */}
+                <span title={(theme.secondaryNiches ?? []).map(n => n.name_en).join(", ")} style={{ position: "absolute", top: 8, left: 8, background: theme.niche ? "#2563eb" : "#64748b", color: "#fff", fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: 20 }}>
+                    {theme.niche ? `${theme.niche.icon} ${theme.niche.name_en}` : "🌐 General"}{theme.secondaryNiches?.length ? ` +${theme.secondaryNiches.length}` : ""}
+                </span>
+                {typeName && ["custom", "testing"].includes(typeName) && (
+                    <span style={{ position: "absolute", top: 8, right: 8, background: "#f59e0b", color: "#fff", fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: 20 }}>
+                        hidden · {typeName}
                     </span>
                 )}
             </div>
@@ -407,6 +448,8 @@ export default function ThemePage() {
     const [meta, setMeta] = useState({ totalItems: 0, totalPages: 1, currentPage: 1 });
     const [query, setQuery] = useState("");
     const [filterType, setFilterType] = useState("");
+    const [niches, setNiches] = useState([]);
+    const [filterNiche, setFilterNiche] = useState("");
     const [page, setPage] = useState(1);
     const LIMIT = 12;
 
@@ -426,6 +469,11 @@ export default function ThemePage() {
         catch { /* silent */ }
     }, []);
 
+    const loadNiches = useCallback(async () => {
+        try { const res = await api.get("/niches"); const d = res.data?.data ?? res.data; setNiches(Array.isArray(d) ? [...d].sort((a, b) => a.name_en.localeCompare(b.name_en)) : []); }
+        catch { /* silent */ }
+    }, []);
+
     // جلب كل الخطط للـ plan assignment modal
     const loadPlans = useCallback(async () => {
         try { const res = await api.get("/plans"); setPlans(res.data ?? []); }
@@ -438,14 +486,15 @@ export default function ThemePage() {
             const params = { page, limit: LIMIT, isAdmin: true };
             if (query) params.query = query;
             if (filterType) params.type = filterType;
+            if (filterNiche) params.niche = filterNiche;
             const res = await api.get("/theme", { params });
             setThemes(res.data.data ?? []);
             setMeta(res.data.meta ?? { totalItems: 0, totalPages: 1, currentPage: 1 });
         } catch { showToast("Failed to load themes", "error"); }
         finally { setLoading(false); }
-    }, [query, filterType, page]);
+    }, [query, filterType, filterNiche, page]);
 
-    useEffect(() => { loadTypes(); loadPlans(); }, [loadTypes, loadPlans]);
+    useEffect(() => { loadTypes(); loadPlans(); loadNiches(); }, [loadTypes, loadPlans, loadNiches]);
     useEffect(() => { loadThemes(); }, [loadThemes]);
     useEffect(() => {
         const t = setTimeout(() => setPage(1), 350);
@@ -539,6 +588,11 @@ export default function ThemePage() {
                             </button>
                         ))}
                     </div>
+
+                    <select value={filterNiche} onChange={e => { setFilterNiche(e.target.value); setPage(1); }} style={{ ...inp, width: 220 }}>
+                        <option value="">All niches</option>
+                        {niches.map(n => <option key={n.id} value={n.id}>{n.icon} {n.name_en}</option>)}
+                    </select>
 
                     <div style={{ display: "flex", gap: 8, marginLeft: "auto" }}>
                         <button style={btnOutline(viewMode === "grid")} onClick={() => setViewMode("grid")} title="Grid view"><GridIcon /></button>
@@ -654,12 +708,12 @@ export default function ThemePage() {
             {/* ── Modals ── */}
             {modal === "create" && (
                 <Modal title="Create New Theme" onClose={() => setModal(null)} wide>
-                    <ThemeForm types={types} onSubmit={handleCreate} loading={saving} />
+                    <ThemeForm types={types} niches={niches} onSubmit={handleCreate} loading={saving} />
                 </Modal>
             )}
             {modal === "edit" && editing && (
                 <Modal title={`Edit — ${editing.name_en || editing.slug}`} onClose={() => { setModal(null); setEditing(null); }} wide>
-                    <ThemeForm initial={editing} types={types} onSubmit={handleUpdate} loading={saving} />
+                    <ThemeForm initial={editing} types={types} niches={niches} onSubmit={handleUpdate} loading={saving} />
                 </Modal>
             )}
             {modal === "plans" && planTarget && (
