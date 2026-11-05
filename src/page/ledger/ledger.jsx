@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
-import { Search, Download, Loader2, AlertTriangle, CheckCircle2, Wallet } from "lucide-react";
+import { Search, Download, Loader2, AlertTriangle, CheckCircle2, Wallet, Table2, FileSpreadsheet } from "lucide-react";
+import SpreadsheetView from "./SpreadsheetView";
+import { parseCsv } from "../../lib/csv";
 
 const api = axios.create({ baseURL: import.meta.env.VITE_API_URL });
 
@@ -28,6 +30,9 @@ export default function LedgerPage() {
   const [rows, setRows] = useState(null);
   const [mismatches, setMismatches] = useState(null);
   const [error, setError] = useState(null);
+  const [view, setView] = useState("table"); // table = مباشر من القاعدة | sheet = ملف CSV المؤرشف في R2 كجدول Excel
+  const [months, setMonths] = useState(null);
+  const [sheet, setSheet] = useState(null); // { month, rows } | { error }
 
   useEffect(() => { api.get("admin/ledger/mismatches").then((r) => setMismatches(r.data ?? [])).catch((e) => setError(errMsg(e))); }, []);
 
@@ -46,6 +51,20 @@ export default function LedgerPage() {
     catch (e) { setError(errMsg(e)); setRows([]); }
   }, [user, month]);
   useEffect(() => { load(); }, [load]);
+
+  // ملفات R2 المؤرشفة للتاجر، ثم فتح ملف الشهر المختار كجدول Excel
+  useEffect(() => {
+    if (!user || view !== "sheet") return;
+    setMonths(null);
+    api.get(`admin/ledger/${user.id}/files`).then((r) => setMonths(r.data ?? [])).catch(() => setMonths([]));
+  }, [user, view]);
+  useEffect(() => {
+    if (!user || view !== "sheet") return;
+    setSheet(null);
+    api.get(`admin/ledger/${user.id}/file`, { params: { month } })
+      .then((r) => setSheet({ month, rows: parseCsv(r.data?.csv ?? "") }))
+      .catch((e) => setSheet({ error: errMsg(e) }));
+  }, [user, view, month]);
 
   const download = async () => {
     try {
@@ -103,6 +122,31 @@ export default function LedgerPage() {
 
       {error && <p style={{ color: "#dc2626", fontSize: 13 }}>{error}</p>}
 
+      {user && (
+        <div style={{ display: "flex", gap: 6, marginBottom: 10, alignItems: "center", flexWrap: "wrap" }}>
+          {[["table", "جدول مباشر", Table2], ["sheet", "ملف CSV (Excel)", FileSpreadsheet]].map(([k, label, Icon]) => (
+            <button key={k} onClick={() => setView(k)}
+              style={{ ...inp, display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer", fontWeight: 700, background: view === k ? "#0f172a" : "#fff", color: view === k ? "#fff" : "#334155" }}>
+              <Icon size={15} />{label}
+            </button>
+          ))}
+          {view === "sheet" && months?.length > 0 && (
+            <span style={{ fontSize: 12, color: "#64748b", marginInlineStart: 6 }}>
+              ملفات مؤرشفة: {months.map((m) => (
+                <button key={m} onClick={() => setMonth(m)} style={{ border: "none", background: m === month ? "#dbeafe" : "transparent", color: "#2563eb", cursor: "pointer", fontWeight: 700, borderRadius: 6, padding: "2px 6px" }}>{m}</button>
+              ))}
+            </span>
+          )}
+        </div>
+      )}
+
+      {user && view === "sheet" ? (
+        <div style={{ ...card, overflow: "hidden" }}>
+          {sheet === null ? <div style={{ padding: 30, textAlign: "center" }}><Loader2 className="animate-spin" /></div>
+            : sheet.error ? <p style={{ padding: 30, textAlign: "center", color: "#94a3b8", fontSize: 13 }}>{sheet.error}</p>
+            : <SpreadsheetView rows={sheet.rows} sumHeaders={["المبلغ"]} />}
+        </div>
+      ) : (
       <div style={{ ...card, overflowX: "auto" }}>
         {!user ? <p style={{ padding: 30, textAlign: "center", color: "#94a3b8", fontSize: 13 }}>اختر تاجراً لعرض سجله المالي</p>
           : rows === null ? <div style={{ padding: 30, textAlign: "center" }}><Loader2 className="animate-spin" /></div>
@@ -129,6 +173,7 @@ export default function LedgerPage() {
             </table>
           )}
       </div>
+      )}
     </div>
   );
 }
