@@ -579,15 +579,11 @@ export default function ThemePage() {
                         />
                     </div>
 
-                    {/* فلتر بالمجال فقط (أساسي أو ثانوي) — الأنواع لم تعد تُستعمل للتصنيف */}
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                        {[{ id: "", icon: "", name_en: "All" }, ...niches].map(n => (
-                            <button key={n.id || "all"} onClick={() => { setFilterNiche(n.id); setPage(1); }}
-                                style={{ padding: "7px 14px", border: "1px solid", borderRadius: 20, fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all .15s", borderColor: filterNiche === n.id ? "#2563eb" : "#e2e8f0", background: filterNiche === n.id ? "#2563eb" : "#fff", color: filterNiche === n.id ? "#fff" : "#64748b" }}>
-                                {n.icon} {n.name_en}
-                            </button>
-                        ))}
-                    </div>
+                    {/* فلتر بالمجال فقط (أساسي أو ثانوي) — قائمة منسدلة */}
+                    <select value={filterNiche} onChange={e => { setFilterNiche(e.target.value); setPage(1); }} style={{ ...inp, width: 260 }}>
+                        <option value="">All niches</option>
+                        {niches.map(n => <option key={n.id} value={n.id}>{n.icon} {n.name_en} — {n.name_ar}</option>)}
+                    </select>
 
                     <div style={{ display: "flex", gap: 8, marginLeft: "auto" }}>
                         <button style={btnOutline(viewMode === "grid")} onClick={() => setViewMode("grid")} title="Grid view"><GridIcon /></button>
