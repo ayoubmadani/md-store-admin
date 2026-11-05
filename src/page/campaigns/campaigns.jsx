@@ -2,7 +2,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
-import { CheckCircle2, Filter, Loader2, Megaphone, Send, Users } from 'lucide-react';
+import { CheckCircle2, Filter, Loader2, Megaphone, Search, Send, Users, X } from 'lucide-react';
 
 const api = axios.create({ baseURL: import.meta.env.VITE_API_URL, headers: { 'Content-Type': 'application/json' } });
 const errText = (e, f) => { const m = e?.response?.data?.message; return (Array.isArray(m) ? m[0] : m) || f; };
@@ -14,8 +14,9 @@ const fmtDate = (d) => (d ? new Date(d).toLocaleString('en-GB', { day: '2-digit'
 const EMPTY = { registeredFrom: '', registeredTo: '', verified: '', hasStore: '', subscription: '', planId: '', walletMin: '', walletMax: '', noOrdersDays: '' };
 
 /** حقول النموذج ← شروط الـ API (الفارغ لا يُرسل) */
-function toFilters(f) {
+function toFilters(f, picked = []) {
   const out = {};
+  if (picked.length) out.userIds = picked.map((u) => u.id);
   for (const k of ['registeredFrom', 'registeredTo', 'subscription', 'planId']) if (f[k]) out[k] = f[k];
   for (const k of ['verified', 'hasStore']) if (f[k] !== '') out[k] = f[k] === 'yes';
   for (const k of ['walletMin', 'walletMax', 'noOrdersDays']) if (f[k] !== '') out[k] = Number(f[k]);
@@ -34,6 +35,9 @@ export default function CampaignsPage() {
   const [progress, setProgress] = useState(null); // { id, total, sent, failed, remaining, status }
   const [notice, setNotice] = useState(null);
   const [history, setHistory] = useState([]);
+  const [picked, setPicked] = useState([]); // تجار محدّدون { id, username, email }
+  const [uq, setUq] = useState('');
+  const [found, setFound] = useState([]);
   const stop = useRef(false);
 
   const set = (k) => (e) => setF((x) => ({ ...x, [k]: e.target.value }));
@@ -44,7 +48,21 @@ export default function CampaignsPage() {
   }, [loadHistory]);
 
   // المعاينة تتحدث بعد توقف الكتابة
-  const filters = JSON.stringify(toFilters(f));
+  const filters = JSON.stringify(toFilters(f, picked));
+
+  // بحث التجار للاختيار
+  useEffect(() => {
+    const q = uq.trim();
+    if (q.length < 2) { setFound([]); return undefined; }
+    let live = true;
+    const id = setTimeout(() => {
+      api.get('/admin/users/search', { params: { q, limit: 8 } })
+        .then(({ data }) => live && setFound((data?.data ?? []).filter((u) => u.role === 'NORMAL_USER')))
+        .catch(() => live && setFound([]));
+    }, 300);
+    return () => { live = false; clearTimeout(id); };
+  }, [uq]);
+  const pick = (u) => { setPicked((x) => (x.some((y) => y.id === u.id) ? x : [...x, { id: u.id, username: u.username, email: u.email }])); setUq(''); setFound([]); };
   useEffect(() => {
     let live = true;
     const id = setTimeout(() => {
@@ -121,6 +139,35 @@ export default function CampaignsPage() {
         {/* الشروط */}
         <section className={`${card} space-y-3`}>
           <p className="flex items-center gap-2 font-bold text-gray-900"><Filter size={16} className="text-blue-600" />{t('camp.conditions')}</p>
+          {/* تجار محدّدون */}
+          <div className="flex flex-col gap-1.5 min-w-0">
+            <span className={label}>{t('camp.pick_users')}</span>
+            <div className="relative">
+              <Search size={14} className="absolute top-1/2 -translate-y-1/2 start-3 text-gray-400" />
+              <input dir="auto" value={uq} onChange={(e) => setUq(e.target.value)} placeholder={t('camp.pick_users_ph')} className={`${input} ps-8`} />
+              {found.length > 0 && (
+                <div className="absolute z-10 inset-x-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                  {found.map((u) => (
+                    <button key={u.id} type="button" onClick={() => pick(u)} className="w-full text-start px-3 py-2 hover:bg-gray-50 min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 truncate">{u.username || '—'}</p>
+                      <p className="text-xs text-gray-400 truncate" dir="ltr">{u.email}</p>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            {picked.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {picked.map((u) => (
+                  <span key={u.id} className="max-w-full flex items-center gap-1 ps-2.5 pe-1 py-1 rounded-lg bg-blue-50 text-blue-700 text-xs font-semibold">
+                    <span className="truncate">{u.username || u.email}</span>
+                    <button type="button" onClick={() => setPicked((x) => x.filter((y) => y.id !== u.id))} className="p-0.5 rounded hover:bg-blue-100"><X size={12} /></button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <p className="text-[11px] text-gray-400">{t('camp.pick_users_note')}</p>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5 min-w-0"><span className={label}>{t('camp.registered_from')}</span><input type="date" value={f.registeredFrom} onChange={set('registeredFrom')} className={input} /></div>
             <div className="flex flex-col gap-1.5 min-w-0"><span className={label}>{t('camp.registered_to')}</span><input type="date" value={f.registeredTo} onChange={set('registeredTo')} className={input} /></div>
@@ -143,7 +190,7 @@ export default function CampaignsPage() {
             <div className="flex flex-col gap-1.5 min-w-0 col-span-2"><span className={label}>{t('camp.no_orders_days')}</span><input type="number" min="1" dir="ltr" value={f.noOrdersDays} onChange={set('noOrdersDays')} className={input} /></div>
           </div>
           <div className="flex items-center justify-between gap-2 pt-1">
-            <button type="button" onClick={() => setF(EMPTY)} className="text-xs font-bold text-gray-400 hover:text-gray-600">{t('camp.clear')}</button>
+            <button type="button" onClick={() => { setF(EMPTY); setPicked([]); }} className="text-xs font-bold text-gray-400 hover:text-gray-600">{t('camp.clear')}</button>
           </div>
           {/* المعاينة */}
           <div className="rounded-xl bg-blue-50 p-3 min-w-0">

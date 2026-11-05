@@ -147,6 +147,30 @@ function RechargeModal({ onClose, onSubmit, loading }) {
   );
 }
 
+// ─── رسالة بريد لهذا التاجر وحده (حملة بتاجر واحد: تُحفظ في «الحملات السابقة»، ولا تصل لمن ألغى الاشتراك)
+function MessageModal({ email, onClose, onSubmit, loading }) {
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
+  const invalid = !subject.trim() || !body.trim();
+  return (
+    <ModalShell title="إرسال رسالة بريد" onClose={onClose}>
+      <p dir="ltr" style={{ margin: "0 0 12px", fontSize: 12, color: "#64748b", wordBreak: "break-all" }}>{email}</p>
+      <label style={{ fontSize: 12, fontWeight: 700, color: "#64748b", display: "block", marginBottom: 6 }}>الموضوع</label>
+      <input dir="auto" maxLength={255} value={subject} onChange={e => setSubject(e.target.value)} style={inp} autoFocus />
+      <label style={{ fontSize: 12, fontWeight: 700, color: "#64748b", display: "block", margin: "14px 0 6px" }}>النص</label>
+      <textarea dir="auto" rows={7} value={body} onChange={e => setBody(e.target.value)} style={{ ...inp, resize: "vertical" }} />
+      <p style={{ margin: "6px 0 0", fontSize: 11, color: "#94a3b8" }}>{"المتغيرات: {name} اسم التاجر، {email} بريده."}</p>
+      <button
+        disabled={loading || invalid}
+        onClick={() => onSubmit(subject.trim(), body.trim())}
+        style={{ width: "100%", marginTop: 16, padding: "10px 0", border: "none", borderRadius: 8, background: invalid ? "#e2e8f0" : "#2563eb", color: "#fff", fontWeight: 700, fontSize: 13, cursor: (loading || invalid) ? "not-allowed" : "pointer" }}
+      >
+        {loading ? "جارٍ الإرسال…" : "إرسال"}
+      </button>
+    </ModalShell>
+  );
+}
+
 // ─── Delete account modal ─────────────────────────────────────────────────────
 // حذف نهائي: يجب كتابة البريد كما هو للتأكيد
 function DeleteUserModal({ email, onClose, onConfirm, loading }) {
@@ -304,6 +328,8 @@ export default function UserShow() {
   const [txAvailable, setTxAvailable]         = useState(false);
   const [txLoading, setTxLoading]             = useState(true);
   const [showRecharge, setShowRecharge]       = useState(false);
+  const [showMessage, setShowMessage]         = useState(false);
+  const [messaging, setMessaging]             = useState(false);
   const [recharging, setRecharging]           = useState(false);
   const [showAssignTheme, setShowAssignTheme] = useState(false);
   const [assigning, setAssigning]             = useState(false);
@@ -364,6 +390,21 @@ export default function UserShow() {
       showToast(err?.response?.data?.message ?? "Recharge failed", "error");
     }
     setRecharging(false);
+  };
+
+  const submitMessage = async (subject, body) => {
+    setMessaging(true);
+    try {
+      const { data: c } = await api.post("/admin/campaigns", { subject, body, filters: { userIds: [id] } });
+      const { data: r } = await api.post(`/admin/campaigns/${c.id}/send`, { size: 1 });
+      if (r.sent > 0) { showToast("تم إرسال الرسالة ✓"); setShowMessage(false); }
+      else showToast(r.failed > 0 ? "فشل الإرسال" : "لم تُرسل: التاجر ألغى الاشتراك", "error");
+    } catch (err) {
+      const m = err?.response?.data?.message;
+      const text = Array.isArray(m) ? m[0] : m;
+      showToast(text === "لا يوجد مستخدم بهذه الشروط" ? "لا يمكن مراسلته: ألغى الاشتراك أو ليس تاجراً" : (text ?? "فشل الإرسال"), "error");
+    }
+    setMessaging(false);
   };
 
   const submitAssignTheme = async (themeId) => {
@@ -548,6 +589,14 @@ export default function UserShow() {
                 <option value="SUPPORT">Support</option>
                 <option value="ADMIN">Admin</option>
               </select>
+              {user.role === "NORMAL_USER" && (
+                <button
+                  onClick={() => setShowMessage(true)}
+                  style={{ padding: "9px 16px", border: "1px solid #bfdbfe", borderRadius: 8, background: "#fff", color: "#2563eb", cursor: "pointer", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}
+                >
+                  <MailIcon /> إرسال رسالة
+                </button>
+              )}
               {user.role !== "ADMIN" && (
                 <button
                   onClick={() => setShowDelete(true)}
@@ -726,6 +775,7 @@ export default function UserShow() {
       {toast && <Toast msg={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
       {showRecharge && <RechargeModal onClose={() => setShowRecharge(false)} onSubmit={submitRecharge} loading={recharging} />}
       {showAssignTheme && <AssignThemeModal onClose={() => setShowAssignTheme(false)} onAssign={submitAssignTheme} assigning={assigning} />}
+      {showMessage && user && <MessageModal email={user.email} onClose={() => setShowMessage(false)} onSubmit={submitMessage} loading={messaging} />}
       {showDelete && user && <DeleteUserModal email={user.email} onClose={() => setShowDelete(false)} onConfirm={deleteUser} loading={deleting} />}
       {showAssignPlan && <AssignPlanModal onClose={() => setShowAssignPlan(false)} onAssign={submitAssignPlan} assigning={assigningPlan} />}
     </>
