@@ -126,15 +126,20 @@ function ModalShell({ title, onClose, children }) {
 // ─── Recharge wallet modal ────────────────────────────────────────────────────
 function RechargeModal({ onClose, onSubmit, loading }) {
   const [amount, setAmount] = useState("");
+  const [reason, setReason] = useState(""); // إلزامي — يُحفظ في السجل المالي للتاجر
+  const invalid = !amount || Number(amount) <= 0 || reason.trim().length < 3;
   return (
     <ModalShell title="Recharge Wallet" onClose={onClose}>
       <label style={{ fontSize: 12, fontWeight: 700, color: "#64748b", display: "block", marginBottom: 6 }}>Amount (DZD)</label>
       <input type="number" min="0" step="1" value={amount} onChange={e => setAmount(e.target.value)}
         placeholder="0.00" style={inp} autoFocus />
+      <label style={{ fontSize: 12, fontWeight: 700, color: "#64748b", display: "block", margin: "14px 0 6px" }}>السبب (إلزامي — يظهر في السجل المالي)</label>
+      <textarea value={reason} onChange={e => setReason(e.target.value)} maxLength={300} rows={3} dir="auto"
+        placeholder="مثلاً: تعويض عن عطل في التوصيل، هدية إطلاق، تصحيح خطأ في الدفع…" style={{ ...inp, resize: "vertical" }} />
       <button
-        disabled={loading || !amount || Number(amount) <= 0}
-        onClick={() => onSubmit(Number(amount))}
-        style={{ width: "100%", marginTop: 16, padding: "10px 0", border: "none", borderRadius: 8, background: (!amount || Number(amount) <= 0) ? "#e2e8f0" : "#16a34a", color: "#fff", fontWeight: 700, fontSize: 13, cursor: (loading || !amount || Number(amount) <= 0) ? "not-allowed" : "pointer" }}
+        disabled={loading || invalid}
+        onClick={() => onSubmit(Number(amount), reason.trim())}
+        style={{ width: "100%", marginTop: 16, padding: "10px 0", border: "none", borderRadius: 8, background: invalid ? "#e2e8f0" : "#16a34a", color: "#fff", fontWeight: 700, fontSize: 13, cursor: (loading || invalid) ? "not-allowed" : "pointer" }}
       >
         {loading ? "Processing…" : "Recharge"}
       </button>
@@ -348,10 +353,10 @@ export default function UserShow() {
 
   useEffect(() => { loadWallet(); }, [loadWallet]);
 
-  const submitRecharge = async (amount) => {
+  const submitRecharge = async (amount, reason) => {
     setRecharging(true);
     try {
-      await api.post(`/admin/users/${id}/wallet/recharge`, { amount });
+      await api.post(`/admin/users/${id}/wallet/recharge`, { amount, reason });
       showToast("Wallet recharged ✓");
       setShowRecharge(false);
       loadWallet();
