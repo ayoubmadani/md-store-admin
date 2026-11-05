@@ -1,261 +1,203 @@
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import axios from "axios";
-import { X } from "lucide-react";
-import { Copy } from "lucide-react";
+import { Folder, FolderPlus, Upload, Copy, Trash2, Pencil, ChevronLeft, Home, Loader2, MoveRight, X, Check, Image as ImageIcon } from "lucide-react";
 
-// إعداد الـ API (يفضل أن يكون في ملف منفصل ولكن سأضعه هنا للتوضيح)
-const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL,
-});
+const api = axios.create({ baseURL: import.meta.env.VITE_API_URL });
 
-// ─── Icons ────────────────────────────────────────────────────────────────────
-const Icon = ({ d, size = 18 }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-        <path d={d} />
-    </svg>
-);
-const UploadIcon = () => <Icon d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />;
-const ImageIcon = () => <Icon d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h18a2 2 0 0 1 2 2zM8.5 8.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM21 15l-5-5L5 21" />;
+// مدير ملفات الأدمن (منفصل عن ملفات المتاجر): مجلدات داخل مجلدات، رفع صور إلى المجلد الحالي، نقل، نسخ الرابط.
+// المجلدات افتراضية: إعادة التسمية والنقل لا تغيّر روابط الصور.
+
+const card = { background: "#fff", border: "1px solid #e2e8f0", borderRadius: 14 };
+const btn = (bg = "#2563eb", color = "#fff") => ({ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 14px", borderRadius: 9, border: "none", background: bg, color, fontSize: 13, fontWeight: 700, cursor: "pointer" });
+const iconBtn = { cursor: "pointer", padding: 6, background: "rgba(255,255,255,.92)", border: "1px solid #e2e8f0", borderRadius: 8, display: "flex", color: "#64748b" };
+const errMsg = (e) => { const m = e?.response?.data?.message; return (Array.isArray(m) ? m[0] : m) || e?.message || "Error"; };
+const fmtSize = (b) => (b > 1048576 ? `${(b / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1024))} KB`);
 
 export default function ImageAdminPage() {
-    const [images, setImages] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [uploading, setUploading] = useState(false);
-    const [page, setPage] = useState(1);
+  const [folderId, setFolderId] = useState(null);
+  const [data, setData] = useState({ path: [], folders: [], files: [] });
+  const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const [selected, setSelected] = useState(new Set());
+  const [moving, setMoving] = useState(null); // { ids } أو { folder }
+  const [toast, setToast] = useState(null);
+  const fileRef = useRef(null);
 
-    // 1. جلب الصور من السيرفر
-    const fetchImages = useCallback(async () => {
-        setLoading(true);
-        try {
-            const res = await api.get(`admin-images`);
-            console.log(res.data);
+  const say = (msg, type = "ok") => { setToast({ msg, type }); setTimeout(() => setToast(null), 3000); };
 
-            setImages(res.data);
-        } catch (err) {
-            console.error("Failed to load images", err);
-        } finally {
-            setLoading(false);
-        }
-    }, [page]);
+  const load = useCallback(async (id = folderId) => {
+    setLoading(true);
+    try {
+      const { data: d } = await api.get("admin-files", { params: { folderId: id || "root" } });
+      setData(d);
+      setSelected(new Set());
+    } catch (e) { say(errMsg(e), "error"); } finally { setLoading(false); }
+  }, [folderId]);
 
-    useEffect(() => { fetchImages(); }, [fetchImages]);
+  useEffect(() => { load(folderId); }, [folderId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    // 2. معالجة رفع الصور
-    const handleUpload = async (e) => {
-        const files = e.target.files;
-        if (!files.length) return;
-
-        const formData = new FormData();
-        for (let i = 0; i < files.length; i++) {
-            formData.append("files", files[i]);
-        }
-
-        setUploading(true);
-        try {
-            await api.post("admin-images", formData, {
-                headers: { "Content-Type": "multipart/form-data" },
-            });
-            fetchImages(); // إعادة تحديث القائمة بعد الرفع
-        } catch (err) {
-            alert("خطأ أثناء الرفع: " + (err.response?.data?.message || "فشل الرفع"));
-        } finally {
-            setUploading(false);
-            e.target.value = null; // إعادة تعيين حقل الاختيار
-        }
-    };
-
-    const handleDelete = async (id) => {
-    // 1. التأكد من الموافقة (إصلاح الشرط)
-    if (!window.confirm('هل أنت متأكد من حذف هذه الصورة؟')) {
-        return;
-    }
-
+  const upload = async (list) => {
+    const files = [...(list || [])].filter((f) => f.type.startsWith("image/"));
+    if (!files.length) return;
+    const form = new FormData();
+    files.forEach((f) => form.append("files", f));
     setUploading(true);
     try {
-        // 2. إرسال طلب الحذف (تمت إزالة الهيدرز غير الضرورية)
-        await api.delete(`admin-images/${id}`);
-        
-        // 3. تحديث القائمة
-        fetchImages(); 
-        
-        alert("تم حذف الصورة بنجاح");
-    } catch (err) {
-        console.error(err);
-        alert("خطأ أثناء الحذف: " + (err.response?.data?.message || "فشل الحذف"));
-    } finally {
-        setUploading(false);
-    }
-};
+      await api.post("admin-files/upload", form, { params: { folderId: folderId || "root" }, headers: { "Content-Type": "multipart/form-data" } });
+      say(`تم رفع ${files.length} صورة`);
+      load();
+    } catch (e) { say(errMsg(e), "error"); } finally { setUploading(false); if (fileRef.current) fileRef.current.value = ""; }
+  };
 
-    return (
-        <div style={{ padding: 24, fontFamily: 'inherit' }}>
+  const newFolder = async () => {
+    const name = window.prompt("اسم المجلد الجديد");
+    if (!name?.trim()) return;
+    try { await api.post("admin-files/folders", { name, parentId: folderId }); load(); } catch (e) { say(errMsg(e), "error"); }
+  };
+  const renameFolder = async (f) => {
+    const name = window.prompt("الاسم الجديد", f.name);
+    if (!name?.trim() || name === f.name) return;
+    try { await api.patch(`admin-files/folders/${f.id}`, { name }); load(); } catch (e) { say(errMsg(e), "error"); }
+  };
+  const deleteFolder = async (f) => {
+    if (!window.confirm(`حذف المجلد «${f.name}»؟ (يجب أن يكون فارغاً)`)) return;
+    try { await api.delete(`admin-files/folders/${f.id}`); load(); } catch (e) { say(errMsg(e), "error"); }
+  };
+  const deleteFile = async (img) => {
+    if (!window.confirm("حذف هذه الصورة نهائياً؟ إن كانت مستعملة في مكان ما ستختفي منه.")) return;
+    try { await api.delete(`admin-images/${img.id}`); load(); } catch (e) { say(errMsg(e), "error"); }
+  };
+  const copy = (url) => { navigator.clipboard.writeText(url); say("تم نسخ الرابط"); };
+  const toggle = (id) => setSelected((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
-            {/* Header & Upload Section */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 30 }}>
-                <div>
-                    <h1 style={{ fontSize: 24, fontWeight: 800, color: "#1e293b", margin: 0 }}>مكتبة الصور</h1>
-                    <p style={{ color: "#64748b", fontSize: 14 }}>إدارة ورفع الصور الخاصة بلوحة التحكم</p>
-                </div>
-
-                <label style={{
-                    display: "flex", alignItems: "center", gap: 8, padding: "10px 20px",
-                    background: uploading ? "#94a3b8" : "#2563eb", color: "#fff",
-                    borderRadius: 8, cursor: uploading ? "not-allowed" : "pointer",
-                    fontWeight: 600, fontSize: 14, transition: "0.2s"
-                }}>
-                    <UploadIcon />
-                    {uploading ? "جاري الرفع..." : "رفع صور جديدة"}
-                    <input type="file" multiple hidden onChange={handleUpload} disabled={uploading} accept="image/*" />
-                </label>
-            </div>
-
-            {/* Images Grid */}
-            {loading ? (
-                <div style={{ textAlign: "center", padding: 50, color: "#94a3b8" }}>جاري تحميل الصور...</div>
-            ) : images.length === 0 ? (
-                <div style={{ textAlign: "center", padding: 100, background: "#f8fafc", borderRadius: 16, border: "2px dashed #e2e8f0" }}>
-                    <ImageIcon />
-                    <p style={{ color: "#64748b", marginTop: 10 }}>لا توجد صور مرفوعة حالياً</p>
-                </div>
-            ) : (
-                <div style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
-                    gap: 20
-                }}>
-                    {images.map((img) => (
-
-                        <div
-                            key={img.id}
-                            style={{
-                                group: "card", // للإشارة البرمجية فقط
-                                background: "#fff",
-                                borderRadius: "16px",
-                                overflow: "hidden",
-                                position: "relative",
-                                boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-                                border: "1px solid #f1f5f9",
-                                transition: "all 0.3s ease"
-                            }}
-                        >
-                            {/* طبقة الأزرار العلوية */}
-                            <div style={{
-                                position: "absolute",
-                                top: "10px",
-                                right: "10px",
-                                display: "flex",
-                                gap: "6px",
-                                zIndex: 20
-                            }}>
-                                {/* زر النسخ */}
-                                <button
-                                    onClick={() => {
-                                        navigator.clipboard.writeText(img.url);
-                                    }}
-                                    style={{
-                                        cursor: "pointer",
-                                        padding: "6px",
-                                        background: "rgba(255, 255, 255, 0.9)",
-                                        backdropFilter: "blur(4px)",
-                                        border: "1px solid #e2e8f0",
-                                        borderRadius: "8px",
-                                        display: "flex",
-                                        color: "#64748b",
-                                        transition: "all 0.2s"
-                                    }}
-                                    onMouseEnter={(e) => e.currentTarget.style.color = "#3b82f6"} // أزرق عند الحوم
-                                    onMouseLeave={(e) => e.currentTarget.style.color = "#64748b"}
-                                >
-                                    <Copy size={14} />
-                                </button>
-
-                                {/* زر الحذف */}
-                                <button
-                                    onClick={()=> handleDelete(img.id)}
-                                    style={{
-                                        cursor: "pointer",
-                                        padding: "6px",
-                                        background: "rgba(255, 255, 255, 0.9)",
-                                        backdropFilter: "blur(4px)",
-                                        border: "1px solid #e2e8f0",
-                                        borderRadius: "8px",
-                                        display: "flex",
-                                        color: "#64748b",
-                                        transition: "all 0.2s"
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.borderColor = "#ef4444";
-                                        e.currentTarget.style.color = "#ef4444";
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.borderColor = "#e2e8f0";
-                                        e.currentTarget.style.color = "#64748b";
-                                    }}
-                                >
-                                    <X size={14} />
-                                </button>
-                            </div>
-
-                            {/* الصورة */}
-                            <div style={{ height: "160px", overflow: "hidden", background: "#f8fafc" }}>
-                                <img
-                                    src={img.url}
-                                    alt="upload"
-                                    style={{
-                                        width: "100%",
-                                        height: "100%",
-                                        objectFit: "cover"
-                                    }}
-                                />
-                            </div>
-
-                            {/* شريط المعلومات السفلي */}
-                            <div style={{
-                                padding: "10px 14px",
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center"
-                            }}>
-                                <div style={{ display: "flex", flexDirection: "column" }}>
-                                    <span style={{ fontSize: "11px", fontWeight: "600", color: "#1e293b" }}>
-                                        صورة مرفوعة
-                                    </span>
-                                    <span style={{ fontSize: "10px", color: "#94a3b8" }}>
-                                        {(img.size / 1024).toFixed(1)} KB
-                                    </span>
-                                </div>
-
-                                {/* علامة الحالة (اختياري) */}
-                                <div style={{
-                                    width: "8px",
-                                    height: "8px",
-                                    borderRadius: "50%",
-                                    background: "#10b981" // أخضر للحالة النشطة
-                                }} />
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            {/* Simple Pagination Control */}
-            <div style={{ marginTop: 40, display: "flex", justifyContent: "center", gap: 10 }}>
-                <button
-                    onClick={() => setPage(p => Math.max(1, p - 1))}
-                    disabled={page === 1}
-                    style={{ padding: "8px 16px", borderRadius: 6, border: "1px solid #e2e8f0", background: "#fff", cursor: "pointer" }}
-                >
-                    السابق
-                </button>
-                <span style={{ alignSelf: "center", fontWeight: 600 }}>صفحة {page}</span>
-                <button
-                    onClick={() => setPage(p => p + 1)}
-                    disabled={images.length < 100} // افترضنا أن الـ take هو 100 كما في السيرفر
-                    style={{ padding: "8px 16px", borderRadius: 6, border: "1px solid #e2e8f0", background: "#fff", cursor: "pointer" }}
-                >
-                    التالي
-                </button>
-            </div>
+  return (
+    <div style={{ padding: 24 }}
+      onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+      onDragLeave={(e) => { if (e.currentTarget === e.target) setDragOver(false); }}
+      onDrop={(e) => { e.preventDefault(); setDragOver(false); upload(e.dataTransfer.files); }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
+        <div>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: "#1e293b", margin: 0 }}>ملفات الأدمن</h1>
+          <p style={{ color: "#64748b", fontSize: 13, margin: "4px 0 0" }}>مجلدات وصور خاصة بالأدمن — منفصلة عن ملفات المتاجر. اسحب الصور إلى الصفحة لرفعها هنا.</p>
         </div>
-    );
+        <div style={{ display: "flex", gap: 8 }}>
+          {selected.size > 0 && <button onClick={() => setMoving({ ids: [...selected] })} style={btn("#f1f5f9", "#0f172a")}><MoveRight size={15} /> نقل ({selected.size})</button>}
+          <button onClick={newFolder} style={btn("#f1f5f9", "#0f172a")}><FolderPlus size={15} /> مجلد جديد</button>
+          <button onClick={() => fileRef.current?.click()} disabled={uploading} style={btn(uploading ? "#94a3b8" : "#2563eb")}>
+            {uploading ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />} {uploading ? "جاري الرفع…" : "رفع صور"}
+          </button>
+          <input ref={fileRef} type="file" multiple hidden accept="image/*" onChange={(e) => upload(e.target.files)} />
+        </div>
+      </div>
+
+      {/* المسار */}
+      <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap", fontSize: 13, marginBottom: 14 }}>
+        <button onClick={() => setFolderId(null)} style={{ ...btn(folderId ? "transparent" : "#eff6ff", "#2563eb"), padding: "5px 9px" }}><Home size={14} /> الجذر</button>
+        {data.path.map((f) => (
+          <span key={f.id} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+            <ChevronLeft size={14} color="#94a3b8" />
+            <button onClick={() => setFolderId(f.id)} style={{ ...btn(f.id === folderId ? "#eff6ff" : "transparent", "#2563eb"), padding: "5px 9px" }}>{f.name}</button>
+          </span>
+        ))}
+      </div>
+
+      <div style={{ ...card, padding: 16, outline: dragOver ? "2px dashed #2563eb" : "none", minHeight: 300 }}>
+        {loading ? (
+          <div style={{ textAlign: "center", padding: 50 }}><Loader2 className="animate-spin" color="#94a3b8" /></div>
+        ) : !data.folders.length && !data.files.length ? (
+          <div style={{ textAlign: "center", padding: 70, color: "#64748b" }}>
+            <ImageIcon size={30} color="#cbd5e1" />
+            <p style={{ marginTop: 10 }}>المجلد فارغ — أنشئ مجلداً أو اسحب الصور هنا</p>
+          </div>
+        ) : (
+          <>
+            {data.folders.length > 0 && (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))", gap: 10, marginBottom: 18 }}>
+                {data.folders.map((f) => (
+                  <div key={f.id} onDoubleClick={() => setFolderId(f.id)} style={{ ...card, padding: "10px 12px", display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }} onClick={() => setFolderId(f.id)}>
+                    <Folder size={20} color="#f59e0b" fill="#fde68a" />
+                    <span style={{ flex: 1, fontWeight: 700, fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.name}</span>
+                    <button title="إعادة التسمية" onClick={(e) => { e.stopPropagation(); renameFolder(f); }} style={{ ...iconBtn, padding: 4 }}><Pencil size={12} /></button>
+                    <button title="نقل" onClick={(e) => { e.stopPropagation(); setMoving({ folder: f }); }} style={{ ...iconBtn, padding: 4 }}><MoveRight size={12} /></button>
+                    <button title="حذف (فارغ فقط)" onClick={(e) => { e.stopPropagation(); deleteFolder(f); }} style={{ ...iconBtn, padding: 4, color: "#ef4444" }}><Trash2 size={12} /></button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {data.files.length > 0 && (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(170px, 1fr))", gap: 14 }}>
+                {data.files.map((img) => {
+                  const on = selected.has(img.id);
+                  return (
+                    <div key={img.id} style={{ ...card, overflow: "hidden", position: "relative", outline: on ? "2px solid #2563eb" : "none" }}>
+                      <div style={{ position: "absolute", top: 8, insetInline: 8, display: "flex", justifyContent: "space-between", zIndex: 2 }}>
+                        <button title="تحديد" onClick={() => toggle(img.id)} style={{ ...iconBtn, background: on ? "#2563eb" : iconBtn.background, color: on ? "#fff" : "#64748b" }}><Check size={13} /></button>
+                        <span style={{ display: "flex", gap: 6 }}>
+                          <button title="نسخ الرابط" onClick={() => copy(img.url)} style={iconBtn}><Copy size={13} /></button>
+                          <button title="حذف" onClick={() => deleteFile(img)} style={{ ...iconBtn, color: "#ef4444" }}><X size={13} /></button>
+                        </span>
+                      </div>
+                      <a href={img.url} target="_blank" rel="noreferrer" style={{ display: "block", height: 140, background: "#f8fafc" }}>
+                        <img src={img.url} alt="" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                      </a>
+                      <div style={{ padding: "7px 10px", fontSize: 11, color: "#64748b", display: "flex", justifyContent: "space-between", gap: 6 }}>
+                        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} dir="ltr">{img.name || img.key?.split("/").pop()}</span>
+                        <span style={{ flexShrink: 0 }}>{fmtSize(img.size || 0)}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {moving && <MoveModal moving={moving} onClose={() => setMoving(null)} onDone={(msg) => { setMoving(null); say(msg); load(); }} onError={(e) => say(errMsg(e), "error")} />}
+      {toast && <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 9999, padding: "12px 18px", background: toast.type === "error" ? "#ef4444" : "#22c55e", color: "#fff", borderRadius: 10, fontSize: 14, fontWeight: 600 }}>{toast.msg}</div>}
+    </div>
+  );
+}
+
+// اختيار مجلد الوجهة بالتصفح (لنقل صور محددة أو مجلد كامل)
+function MoveModal({ moving, onClose, onDone, onError }) {
+  const [at, setAt] = useState(null);
+  const [view, setView] = useState({ path: [], folders: [] });
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { api.get("admin-files", { params: { folderId: at || "root" } }).then((r) => setView(r.data)).catch(onError); }, [at]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const go = async () => {
+    setBusy(true);
+    try {
+      if (moving.folder) await api.patch(`admin-files/folders/${moving.folder.id}`, { parentId: at });
+      else await api.patch("admin-files/files/move", { ids: moving.ids, folderId: at });
+      onDone("تم النقل");
+    } catch (e) { onError(e); setBusy(false); }
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+      <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(15,23,42,.45)" }} />
+      <div style={{ ...card, position: "relative", width: "100%", maxWidth: 440, padding: 18 }}>
+        <b style={{ fontSize: 15 }}>نقل {moving.folder ? `المجلد «${moving.folder.name}»` : `${moving.ids.length} صورة`} إلى…</b>
+        <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap", fontSize: 12, margin: "12px 0" }}>
+          <button onClick={() => setAt(null)} style={{ ...btn("transparent", "#2563eb"), padding: "4px 8px" }}><Home size={13} /> الجذر</button>
+          {view.path.map((f) => <span key={f.id} style={{ display: "inline-flex", alignItems: "center" }}><ChevronLeft size={13} color="#94a3b8" /><button onClick={() => setAt(f.id)} style={{ ...btn("transparent", "#2563eb"), padding: "4px 8px" }}>{f.name}</button></span>)}
+        </div>
+        <div style={{ maxHeight: 260, overflowY: "auto", display: "grid", gap: 6, marginBottom: 14 }}>
+          {view.folders.filter((f) => f.id !== moving.folder?.id).map((f) => (
+            <button key={f.id} onClick={() => setAt(f.id)} style={{ ...card, padding: "9px 12px", display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontWeight: 600, fontSize: 13 }}>
+              <Folder size={17} color="#f59e0b" fill="#fde68a" /> {f.name}
+            </button>
+          ))}
+          {!view.folders.length && <p style={{ fontSize: 12, color: "#94a3b8", margin: 0 }}>لا مجلدات فرعية هنا</p>}
+        </div>
+        <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+          <button onClick={onClose} style={btn("#f1f5f9", "#0f172a")}>إلغاء</button>
+          <button onClick={go} disabled={busy} style={btn()}>{busy && <Loader2 size={14} className="animate-spin" />} النقل إلى هنا</button>
+        </div>
+      </div>
+    </div>
+  );
 }
