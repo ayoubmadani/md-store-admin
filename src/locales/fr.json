@@ -16,7 +16,8 @@
     "images": "Images",
     "settings": "Paramètres",
     "mail": "E-mails",
-    "campaigns": "Envois groupés"
+    "campaigns": "Envois groupés",
+    "ledger": "Journal financier"
   },
   "layout": {
     "admin_panel": "Panneau d'administration",

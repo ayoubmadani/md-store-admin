@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react'
+import LedgerPage from './page/ledger/ledger';
 import { hideSplash } from './lib/splash'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { GoogleOAuthProvider } from '@react-oauth/google'
@@ -56,6 +57,7 @@ export default function App() {
                 <Route path='confirmation' element={<ConfirmationAdmin />} />
                 <Route path='locations' element={<LocationsAdmin />} />
                 <Route path='mail' element={<MailboxPage />} />
+                <Route path='ledger' element={<LedgerPage />} />
                 <Route path='campaigns' element={<CampaignsPage />} />
               </Route>
             </Route>

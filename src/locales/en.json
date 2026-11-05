@@ -16,7 +16,8 @@
     "images": "Images",
     "settings": "Settings",
     "mail": "Email",
-    "campaigns": "Email campaigns"
+    "campaigns": "Email campaigns",
+    "ledger": "Financial log"
   },
   "layout": {
     "admin_panel": "Admin panel",

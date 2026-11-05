@@ -16,7 +16,8 @@
     "images": "الصور",
     "settings": "الإعدادات",
     "mail": "البريد",
-    "campaigns": "رسائل جماعية"
+    "campaigns": "رسائل جماعية",
+    "ledger": "السجل المالي"
   },
   "layout": {
     "admin_panel": "لوحة الإدارة",
