@@ -116,6 +116,8 @@ function ThemeForm({ initial = {}, types = [], niches = [], onSubmit, loading })
         name_en: "", name_ar: "", name_fr: "", slug: "", price: 0,
         desc_en: "", desc_ar: "", desc_fr: "", imageUrl: "", tag: "", typeId: "",
         ...initial,
+        ownerEmail: initial.ownerEmail ?? "",
+        isTesting: !!initial.isTesting,
         nicheId: initial.nicheId ?? null,
         secondaryNicheIds: (initial.secondaryNiches ?? []).map(n => n.id),
     });
@@ -149,6 +151,16 @@ function ThemeForm({ initial = {}, types = [], niches = [], onSubmit, loading })
                         {types.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                     </select>
                 </Field>
+            </div>
+            {/* ثيم مخصص: بريد التاجر ← يراه ويثبّته هو فقط. التجربة: مخفي عن كل التجار */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 12, alignItems: "end" }}>
+                <Field label="Custom for merchant (email) — empty = for everyone">
+                    <input style={inp} type="email" dir="ltr" value={f.ownerEmail || ""} onChange={set("ownerEmail")} placeholder="merchant@email.com" />
+                </Field>
+                <label style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 12px", marginBottom: 12, border: "1px solid #e2e8f0", borderRadius: 8, fontSize: 13, fontWeight: 700, color: f.isTesting ? "#b45309" : "#475569", background: f.isTesting ? "#fffbeb" : "#fff", cursor: "pointer" }}>
+                    <input type="checkbox" checked={f.isTesting} onChange={e => setF(p => ({ ...p, isTesting: e.target.checked }))} />
+                    🧪 Testing (hidden)
+                </label>
             </div>
             <NichePicker niches={niches} nicheId={f.nicheId} secondary={f.secondaryNicheIds}
                 onChange={(secondary, primary) => setF(p => ({ ...p, secondaryNicheIds: secondary, ...(primary !== undefined ? { nicheId: primary } : {}) }))} />
@@ -347,6 +359,11 @@ function ThemeCard({ theme, types, onEdit, onDelete, toggleActive, onManagePlans
                 <span title={(theme.secondaryNiches ?? []).map(n => n.name_en).join(", ")} style={{ position: "absolute", top: 8, left: 8, background: theme.niche ? "#2563eb" : "#64748b", color: "#fff", fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: 20 }}>
                     {theme.niche ? `${theme.niche.icon} ${theme.niche.name_en}` : "🌐 General"}{theme.secondaryNiches?.length ? ` +${theme.secondaryNiches.length}` : ""}
                 </span>
+                {(theme.isTesting || theme.ownerEmail) && (
+                    <span title={theme.ownerEmail || ""} style={{ position: "absolute", bottom: 8, left: 8, maxWidth: "85%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", background: theme.isTesting ? "#f59e0b" : "#7c3aed", color: "#fff", fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: 20 }}>
+                        {theme.isTesting ? "🧪 Testing" : `👤 ${theme.ownerEmail}`}
+                    </span>
+                )}
                 {typeName && ["custom", "testing"].includes(typeName) && (
                     <span style={{ position: "absolute", top: 8, right: 8, background: "#f59e0b", color: "#fff", fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: 20 }}>
                         hidden · {typeName}
@@ -486,7 +503,7 @@ export default function ThemePage() {
             const params = { page, limit: LIMIT, isAdmin: true };
             if (query) params.query = query;
             if (filterNiche) params.niche = filterNiche;
-            const res = await api.get("/theme", { params });
+            const res = await api.get("/theme/admin-list", { params });
             setThemes(res.data.data ?? []);
             setMeta(res.data.meta ?? { totalItems: 0, totalPages: 1, currentPage: 1 });
         } catch { showToast("Failed to load themes", "error"); }
