@@ -22,9 +22,9 @@ const EMPTY_COUNTRY = {
 
 function Modal({ title, onClose, children, width = 560 }) {
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+    <div className="m-sheet" style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
       <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(15,23,42,.45)" }} />
-      <div style={{ ...card, position: "relative", width: "100%", maxWidth: width, maxHeight: "88vh", display: "flex", flexDirection: "column" }}>
+      <div className="m-sheet-card" style={{ ...card, position: "relative", width: "100%", maxWidth: width, maxHeight: "88vh", display: "flex", flexDirection: "column" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 18px", borderBottom: "1px solid #e2e8f0" }}>
           <b style={{ fontSize: 15 }}>{title}</b>
           <button onClick={onClose} style={{ border: "none", background: "none", cursor: "pointer", color: "#64748b" }}><X size={18} /></button>
@@ -63,7 +63,7 @@ function CountryForm({ initial, onSave, onClose }) {
   };
   return (
     <Modal title={isNew ? "New country" : `Edit ${initial.code}`} onClose={onClose}>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 12px" }}>
+      <div className="m-stack" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 12px" }}>
         <Field label="Code (ISO-2)"><input style={input} value={c.code} disabled={!isNew} maxLength={2} onChange={(e) => set("code", e.target.value.toUpperCase())} placeholder="MA" /></Field>
         <Field label="Currency (ISO-3)"><input style={input} value={c.currency} maxLength={3} onChange={(e) => set("currency", e.target.value.toUpperCase())} placeholder="MAD" /></Field>
         <Field label="Name (EN)"><input style={input} value={c.name} onChange={(e) => set("name", e.target.value)} placeholder="Morocco" /></Field>
@@ -74,7 +74,7 @@ function CountryForm({ initial, onSave, onClose }) {
         <div style={{ gridColumn: "1 / -1", marginBottom: 10 }}>
           <span style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#475569", marginBottom: 4 }}>Divisions (optional — e.g. Algeria 58 / 69 wilayas). Code empty = base list</span>
           {(c.divisions || []).map((d, i) => (
-            <div key={i} style={{ display: "grid", gridTemplateColumns: "70px 1fr 1fr 1fr 74px 32px", gap: 6, marginBottom: 6, alignItems: "center" }}>
+            <div key={i} className="m-stack2" style={{ display: "grid", gridTemplateColumns: "70px 1fr 1fr 1fr 74px 32px", gap: 6, marginBottom: 6, alignItems: "center" }}>
               <input style={{ ...input, fontFamily: "monospace" }} value={d.code} maxLength={8} placeholder="—" onChange={(e) => set("divisions", c.divisions.map((x, j) => (j === i ? { ...x, code: e.target.value.trim() } : x)))} />
               {["ar", "fr", "en"].map((lang) => (
                 <input key={lang} style={{ ...input, direction: lang === "ar" ? "rtl" : "ltr" }} value={d[lang] || ""} placeholder={`${lang === "ar" ? "69 ولاية" : lang === "fr" ? "69 wilayas" : "69 provinces"}`}
@@ -92,7 +92,7 @@ function CountryForm({ initial, onSave, onClose }) {
           <button type="button" onClick={() => set("divisions", [...(c.divisions || []), { code: (c.divisions || []).length ? "" : "", ar: "", fr: "", en: "" }])} style={btn("#eff6ff", "#2563eb")}><Plus size={14} /> Division</button>
         </div>
         {["region", "locality"].map((lvl) => (
-          <div key={lvl} style={{ gridColumn: "1 / -1", display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+          <div key={lvl} className="m-stack" style={{ gridColumn: "1 / -1", display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
             {["ar", "fr", "en"].map((lang) => (
               <Field key={lang} label={`${lvl === "region" ? "Region" : "Locality"} name (${lang})`}>
                 <input style={{ ...input, direction: lang === "ar" ? "rtl" : "ltr" }} value={c.levels[lvl][lang] || ""} onChange={(e) => setLevel(lvl, lang, e.target.value)} />
@@ -127,7 +127,7 @@ function RegionForm({ country, initial, onSave, onClose }) {
   };
   return (
     <Modal title={initial.name ? `${country} · ${initial.name}` : `${country} · New region`} onClose={onClose} width={760}>
-      <div style={{ display: "grid", gridTemplateColumns: "120px 1fr 1fr 120px", gap: 10 }}>
+      <div className="m-stack2" style={{ display: "grid", gridTemplateColumns: "120px 1fr 1fr 120px", gap: 10 }}>
         <Field label="ID"><input style={input} type="number" value={r.id} disabled={!!initial.name} onChange={(e) => setR({ ...r, id: e.target.value })} /></Field>
         <Field label="Name"><input style={input} value={r.name} onChange={(e) => setR({ ...r, name: e.target.value })} /></Field>
         <Field label="الاسم"><input style={{ ...input, direction: "rtl" }} value={r.ar_name} onChange={(e) => setR({ ...r, ar_name: e.target.value })} /></Field>
@@ -140,7 +140,7 @@ function RegionForm({ country, initial, onSave, onClose }) {
       </div>
       <div style={{ border: "1px solid #e2e8f0", borderRadius: 10, maxHeight: 340, overflowY: "auto" }}>
         {r.localities.map((l, i) => (
-          <div key={i} style={{ display: "grid", gridTemplateColumns: "110px 1fr 1fr 90px 32px", gap: 6, padding: 6, borderBottom: "1px solid #f1f5f9" }}>
+          <div key={i} className="m-stack2" style={{ display: "grid", gridTemplateColumns: "110px 1fr 1fr 90px 32px", gap: 6, padding: 6, borderBottom: "1px solid #f1f5f9" }}>
             <input style={input} type="number" value={l.id} onChange={(e) => setLoc(i, "id", e.target.value)} />
             <input style={input} value={l.name} placeholder="Name" onChange={(e) => setLoc(i, "name", e.target.value)} />
             <input style={{ ...input, direction: "rtl" }} value={l.ar_name} placeholder="الاسم" onChange={(e) => setLoc(i, "ar_name", e.target.value)} />
@@ -240,8 +240,8 @@ export default function LocationsAdmin() {
   };
 
   return (
-    <div style={{ padding: 24 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+    <div className="m-pad" style={{ padding: 24 }}>
+      <div className="m-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <Globe2 size={22} color="#2563eb" />
           <div>
@@ -252,7 +252,7 @@ export default function LocationsAdmin() {
         <button onClick={() => setCountryModal(EMPTY_COUNTRY)} style={btn()}><Plus size={15} /> New country</button>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "280px 1fr", gap: 16, alignItems: "start" }}>
+      <div className="m-stack" style={{ display: "grid", gridTemplateColumns: "280px 1fr", gap: 16, alignItems: "start" }}>
         <div style={{ ...card, overflow: "hidden" }}>
           {countries.map((c) => (
             <div key={c.code} onClick={() => setSelected(c.code)}
@@ -315,7 +315,7 @@ export default function LocationsAdmin() {
             <input style={{ ...input, paddingLeft: 32 }} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search regions…" />
           </div>
           {loading ? <div style={{ padding: 30, textAlign: "center" }}><Loader2 className="animate-spin" /></div> : (
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+            <div className="m-scroll-x"><table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
               <thead><tr style={{ textAlign: "left", color: "#64748b" }}>
                 {["ID", "Code", "Name", "الاسم", "Localities", ""].map((h) => <th key={h} style={{ padding: "8px 6px", borderBottom: "1px solid #e2e8f0" }}>{h}</th>)}
               </tr></thead>
@@ -333,7 +333,7 @@ export default function LocationsAdmin() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>
           )}
         </div>
       </div>
@@ -341,7 +341,7 @@ export default function LocationsAdmin() {
       {countryModal && <CountryForm initial={countryModal} onSave={saveCountry} onClose={() => setCountryModal(null)} />}
       {regionModal && <RegionForm country={selected} initial={regionModal} onSave={saveRegion} onClose={() => setRegionModal(null)} />}
       {toast && (
-        <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 9999, padding: "12px 18px", background: toast.type === "error" ? "#ef4444" : "#22c55e", color: "#fff", borderRadius: 10, fontSize: 14, fontWeight: 600 }}>
+        <div className="m-toast" style={{ position: "fixed", bottom: 24, right: 24, zIndex: 9999, padding: "12px 18px", background: toast.type === "error" ? "#ef4444" : "#22c55e", color: "#fff", borderRadius: 10, fontSize: 14, fontWeight: 600 }}>
           {toast.msg}
         </div>
       )}

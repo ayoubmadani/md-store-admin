@@ -115,7 +115,7 @@ export default function ContactMessages() {
   ))}
 </div>
 
-        <div style={{ position: "relative", flex: "1 1 220px", maxWidth: 360 }}>
+        <div className="m-full" style={{ position: "relative", flex: "1 1 220px", maxWidth: 360 }}>
           <span style={{ position: "absolute", insetInlineStart: 12, top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }}><SearchIcon size={18}/></span>
           <input 
             type="text"
@@ -134,7 +134,7 @@ export default function ContactMessages() {
         ) : messages.length > 0 ? (
           messages.map(msg => (
             <div key={msg.id} style={{ background: "#fff", border: "1px solid #f1f5f9", borderRadius: "20px", padding: "clamp(14px, 4vw, 24px)" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginBottom: 15 }}>
+              <div className="m-wrap" style={{ display: "flex", justifyContent: "space-between", gap: 10, marginBottom: 15 }}>
                 <div style={{ display: "flex", gap: 12, alignItems: "center", minWidth: 0 }}>
                   <div style={{ width: 44, height: 44, background: "#eff6ff", color: "#3b82f6", borderRadius: "14px", display: "flex", alignItems: "center", justifyContent: "center" }}><UserIcon size={22} /></div>
                   <div>

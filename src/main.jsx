@@ -3,6 +3,7 @@ import './api-auth.js'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
+import './mobile.css' // الهاتف لصفحات الأدمن ذات الأنماط الثابتة
 import './i18n'
 import App from './App.jsx'
 

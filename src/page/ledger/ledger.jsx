@@ -77,7 +77,7 @@ export default function LedgerPage() {
   };
 
   return (
-    <div style={{ padding: 24 }} dir="rtl">
+    <div className="m-pad" style={{ padding: 24 }} dir="rtl">
       <h1 style={{ fontSize: 22, fontWeight: 800, color: "#1e293b", margin: 0, display: "flex", alignItems: "center", gap: 8 }}><Wallet size={22} color="#2563eb" /> السجل المالي</h1>
       <p style={{ color: "#64748b", fontSize: 13, margin: "4px 0 16px" }}>كل حركة في محفظة التاجر بالرصيد قبل وبعد ومن قام بها — لا تُعدَّل ولا تُحذف. نسخة CSV شهرية تُحفظ كل ليلة في دلو R2 خاص.</p>
 
@@ -102,7 +102,7 @@ export default function LedgerPage() {
 
       {/* اختيار التاجر والشهر */}
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-start", marginBottom: 14 }}>
-        <div style={{ position: "relative", width: 320 }}>
+        <div className="m-full" style={{ position: "relative", width: 320 }}>
           <Search size={15} style={{ position: "absolute", top: 11, right: 10, color: "#94a3b8" }} />
           <input style={{ ...inp, width: "100%", paddingRight: 32, boxSizing: "border-box" }} value={q} onChange={(e) => setQ(e.target.value)} placeholder="ابحث عن تاجر بالاسم أو البريد…" />
           {users.length > 0 && (

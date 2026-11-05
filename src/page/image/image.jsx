@@ -72,7 +72,7 @@ export default function ImageAdminPage() {
   const toggle = (id) => setSelected((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
 
   return (
-    <div style={{ padding: 24 }}
+    <div className="m-pad" style={{ padding: 24 }}
       onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
       onDragLeave={(e) => { if (e.currentTarget === e.target) setDragOver(false); }}
       onDrop={(e) => { e.preventDefault(); setDragOver(false); upload(e.dataTransfer.files); }}>
@@ -81,7 +81,7 @@ export default function ImageAdminPage() {
           <h1 style={{ fontSize: 22, fontWeight: 800, color: "#1e293b", margin: 0 }}>ملفات الأدمن</h1>
           <p style={{ color: "#64748b", fontSize: 13, margin: "4px 0 0" }}>مجلدات وصور خاصة بالأدمن — منفصلة عن ملفات المتاجر. اسحب الصور إلى الصفحة لرفعها هنا.</p>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div className="m-wrap" style={{ display: "flex", gap: 8 }}>
           {selected.size > 0 && <button onClick={() => setMoving({ ids: [...selected] })} style={btn("#f1f5f9", "#0f172a")}><MoveRight size={15} /> نقل ({selected.size})</button>}
           <button onClick={newFolder} style={btn("#f1f5f9", "#0f172a")}><FolderPlus size={15} /> مجلد جديد</button>
           <button onClick={() => fileRef.current?.click()} disabled={uploading} style={btn(uploading ? "#94a3b8" : "#2563eb")}>
@@ -155,7 +155,7 @@ export default function ImageAdminPage() {
       </div>
 
       {moving && <MoveModal moving={moving} onClose={() => setMoving(null)} onDone={(msg) => { setMoving(null); say(msg); load(); }} onError={(e) => say(errMsg(e), "error")} />}
-      {toast && <div style={{ position: "fixed", bottom: 24, right: 24, zIndex: 9999, padding: "12px 18px", background: toast.type === "error" ? "#ef4444" : "#22c55e", color: "#fff", borderRadius: 10, fontSize: 14, fontWeight: 600 }}>{toast.msg}</div>}
+      {toast && <div className="m-toast" style={{ position: "fixed", bottom: 24, right: 24, zIndex: 9999, padding: "12px 18px", background: toast.type === "error" ? "#ef4444" : "#22c55e", color: "#fff", borderRadius: 10, fontSize: 14, fontWeight: 600 }}>{toast.msg}</div>}
     </div>
   );
 }
@@ -177,9 +177,9 @@ function MoveModal({ moving, onClose, onDone, onError }) {
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+    <div className="m-sheet" style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
       <div onClick={onClose} style={{ position: "absolute", inset: 0, background: "rgba(15,23,42,.45)" }} />
-      <div style={{ ...card, position: "relative", width: "100%", maxWidth: 440, padding: 18 }}>
+      <div className="m-sheet-card" style={{ ...card, position: "relative", width: "100%", maxWidth: 440, padding: 18 }}>
         <b style={{ fontSize: 15 }}>نقل {moving.folder ? `المجلد «${moving.folder.name}»` : `${moving.ids.length} صورة`} إلى…</b>
         <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap", fontSize: 12, margin: "12px 0" }}>
           <button onClick={() => setAt(null)} style={{ ...btn("transparent", "#2563eb"), padding: "4px 8px" }}><Home size={13} /> الجذر</button>

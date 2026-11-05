@@ -1,0 +1,19 @@
+/* الهاتف (أقل من 768px) لصفحات الأدمن المكتوبة بأنماط ثابتة (style={{...}}) — نفس الأصناف في كل الصفحات.
+   !important لأن الأنماط المكتوبة داخل العنصر تغلب الأصناف العادية. */
+@media (max-width: 767px) {
+  .m-pad { padding: 12px !important; }
+  .m-stack { grid-template-columns: 1fr !important; }
+  .m-stack2 { grid-template-columns: 1fr 1fr !important; }
+  .m-col { flex-direction: column !important; align-items: stretch !important; }
+  .m-wrap { flex-wrap: wrap !important; gap: 8px !important; }
+  .m-full { width: 100% !important; max-width: 100% !important; min-width: 0 !important; box-sizing: border-box; }
+  .m-grow { flex: 1 1 100% !important; }
+  .m-hide { display: none !important; }
+  .m-scroll-x { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+  .m-scroll-x table { min-width: 560px; }
+  .m-sticky-none { position: static !important; }
+  /* النوافذ: تنبثق من أسفل الشاشة بعرضها الكامل */
+  .m-sheet { align-items: flex-end !important; padding: 0 !important; }
+  .m-sheet-card { max-width: 100% !important; width: 100% !important; border-radius: 18px 18px 0 0 !important; max-height: 92vh !important; }
+  .m-toast { left: 12px !important; right: 12px !important; bottom: 12px !important; }
+}

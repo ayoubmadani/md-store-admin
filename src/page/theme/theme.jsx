@@ -30,7 +30,7 @@ function Toast({ msg, type, onClose }) {
     useEffect(() => { const t = setTimeout(onClose, 3000); return () => clearTimeout(t); }, [onClose]);
     const colors = { success: "#22c55e", error: "#ef4444", warning: "#f59e0b" };
     return (
-        <div style={{
+        <div className="m-toast" style={{
             position: "fixed", bottom: 24, right: 24, zIndex: 9999,
             display: "flex", alignItems: "center", gap: 10,
             padding: "12px 18px", background: colors[type] ?? colors.warning,
@@ -47,15 +47,16 @@ function Toast({ msg, type, onClose }) {
 function Modal({ title, onClose, children, wide }) {
     return (
         <div
+            className="m-sheet"
             style={{ position: "fixed", inset: 0, background: "rgba(15,17,23,.6)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, backdropFilter: "blur(4px)" }}
             onClick={e => e.target === e.currentTarget && onClose()}
         >
-            <div style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: wide ? 720 : 540, maxHeight: "92vh", overflow: "auto", boxShadow: "0 24px 60px rgba(0,0,0,.15)", animation: "tm-modalIn .2s ease" }}>
+            <div className="m-sheet-card" style={{ background: "#fff", borderRadius: 16, width: "100%", maxWidth: wide ? 720 : 540, maxHeight: "92vh", overflow: "auto", boxShadow: "0 24px 60px rgba(0,0,0,.15)", animation: "tm-modalIn .2s ease" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 24px", borderBottom: "1px solid #f1f5f9" }}>
                     <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "#0f172a" }}>{title}</h2>
                     <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8", padding: 4, borderRadius: 6 }}><XIcon /></button>
                 </div>
-                <div style={{ padding: 24 }}>{children}</div>
+                <div className="m-pad" style={{ padding: 24 }}>{children}</div>
             </div>
         </div>
     );
@@ -134,21 +135,21 @@ function ThemeForm({ initial = {}, niches = [], onSubmit, loading }) {
 
     return (
         <form onSubmit={handleSubmit}>
-            <div style={col2}>
+            <div className="m-stack" style={col2}>
                 <Field label="Name EN" required><input style={inp} value={f.name_en} onChange={set("name_en")} required /></Field>
                 <Field label="Name AR"><input style={inp} value={f.name_ar} onChange={set("name_ar")} dir="rtl" /></Field>
             </div>
-            <div style={col2}>
+            <div className="m-stack" style={col2}>
                 <Field label="Name FR"><input style={inp} value={f.name_fr} onChange={set("name_fr")} /></Field>
                 <Field label="Slug" required><input style={inp} value={f.slug} onChange={set("slug")} required /></Field>
             </div>
-            <div style={col2}>
+            <div className="m-stack" style={col2}>
                 <Field label="Price" required>
                     <input style={inp} type="number" step="0.01" min="0" value={f.price} onChange={set("price")} required />
                 </Field>
             </div>
             {/* ثيم مخصص: بريد التاجر ← يراه ويثبّته هو فقط. التجربة: مخفي عن كل التجار */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 12, alignItems: "end" }}>
+            <div className="m-stack" style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 12, alignItems: "end" }}>
                 <Field label="Custom for merchant (email) — empty = for everyone">
                     <input style={inp} type="email" dir="ltr" value={f.ownerEmail || ""} onChange={set("ownerEmail")} placeholder="merchant@email.com" />
                 </Field>
@@ -165,7 +166,7 @@ function ThemeForm({ initial = {}, niches = [], onSubmit, loading }) {
             <Field label="Description EN">
                 <textarea style={ta} value={f.desc_en} onChange={set("desc_en")} />
             </Field>
-            <div style={col2}>
+            <div className="m-stack" style={col2}>
                 <Field label="Desc AR"><textarea style={ta} value={f.desc_ar} onChange={set("desc_ar")} dir="rtl" /></Field>
                 <Field label="Desc FR"><textarea style={ta} value={f.desc_fr} onChange={set("desc_fr")} /></Field>
             </div>
@@ -564,12 +565,12 @@ export default function ThemePage() {
                     </div>
 
                     {/* فلتر بالمجال فقط (أساسي أو ثانوي) — قائمة منسدلة */}
-                    <select value={filterNiche} onChange={e => { setFilterNiche(e.target.value); setPage(1); }} style={{ ...inp, width: 260 }}>
+                    <select className="m-full" value={filterNiche} onChange={e => { setFilterNiche(e.target.value); setPage(1); }} style={{ ...inp, width: 260 }}>
                         <option value="">All niches</option>
                         {niches.map(n => <option key={n.id} value={n.id}>{n.icon} {n.name_en} — {n.name_ar}</option>)}
                     </select>
 
-                    <div style={{ display: "flex", gap: 8, marginLeft: "auto" }}>
+                    <div className="m-hide" style={{ display: "flex", gap: 8, marginLeft: "auto" }}>
                         <button style={btnOutline(viewMode === "grid")} onClick={() => setViewMode("grid")} title="Grid view"><GridIcon /></button>
                         <button style={btnOutline(viewMode === "list")} onClick={() => setViewMode("list")} title="List view"><ListIcon /></button>
                         <button style={btnPrimary} onClick={() => setModal("create")}><PlusIcon /> New Theme</button>
@@ -614,6 +615,7 @@ export default function ThemePage() {
                             const tName = t.niche ? `${t.niche.icon} ${t.niche.name_en}` : "🌐 General";
                             return (
                                 <div key={t.id}
+                                    className="m-wrap"
                                     style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 10, padding: "12px 18px", display: "flex", alignItems: "center", gap: 14, transition: "box-shadow .15s" }}
                                     onMouseEnter={e => e.currentTarget.style.boxShadow = "0 2px 12px rgba(37,99,235,.08)"}
                                     onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}
